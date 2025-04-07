@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dictionary", "Dictionary.csproj", "{DD27F046-0E5A-405F-AB67-C693E2380428}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DD27F046-0E5A-405F-AB67-C693E2380428}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD27F046-0E5A-405F-AB67-C693E2380428}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD27F046-0E5A-405F-AB67-C693E2380428}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD27F046-0E5A-405F-AB67-C693E2380428}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
