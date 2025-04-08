@@ -1,9 +1,11 @@
 ﻿namespace Dictionary;
 
+using MyDictionary = Dictionary<string, string>;
+
 class Program
 {
-    private static Dictionary<string, string> _dictionaryRuEn = new Dictionary<string, string>();
-    private static Dictionary<string, string> _dictionaryEnRu = new Dictionary<string, string>();
+    private static MyDictionary _dictionaryRuEn = new();
+    private static MyDictionary _dictionaryEnRu = new();
     private const string _filePath = "Dictionary.txt";
     private const char _separator = ':';
 
@@ -14,7 +16,7 @@ class Program
 
         if ( !File.Exists( _filePath ) )
         {
-            File.Create( _filePath ).Dispose();
+            File.Create( _filePath );
             Console.WriteLine( $"File {_filePath} created" );
         }
 
@@ -24,60 +26,36 @@ class Program
             while ( ( line = sr.ReadLine() ) != null )
             {
                 string[] tokens = line.Split( _separator, 2 );
-                if ( tokens.Length == 2 )
-                {
-                    string key = tokens[ 0 ].Trim();
-                    string value = tokens[ 1 ].Trim();
-                    
-                    var primaryDict = IsEnglish( key ) ? _dictionaryEnRu : _dictionaryRuEn;
-                    var secondaryDict = IsEnglish( key ) ? _dictionaryRuEn : _dictionaryEnRu;
 
-                    AddWordPair( primaryDict, secondaryDict, key, value );
-                }
+                string key = tokens[ 0 ].Trim();
+                string value = tokens[ 1 ].Trim();
+
+                MyDictionary primaryDict = IsEnglish( key ) ? _dictionaryEnRu : _dictionaryRuEn;
+                MyDictionary secondaryDict = IsEnglish( key ) ? _dictionaryRuEn : _dictionaryEnRu;
+
+                AddWordPair( primaryDict, secondaryDict, key, value );
             }
-        }
 
-        Console.WriteLine( $"Loaded {_dictionaryRuEn.Count} dictionary entries." );
+            Console.WriteLine( $"Loaded {_dictionaryRuEn.Count} dictionary entries." );
+        }
     }
 
     static void AddWordPair( Dictionary<string, string> primaryDict, Dictionary<string, string> secondaryDict,
         string key, string value )
     {
-        if ( primaryDict.ContainsKey( key ) )
-        {
-            primaryDict[ key ] = value;
-        }
-        else
-        {
-            primaryDict.Add( key, value );
-        }
-        
-        if ( secondaryDict.ContainsKey( value ) )
-        {
-            secondaryDict[ value ] = key;
-        }
-        else
-        {
-            secondaryDict.Add( value, key );
-        }
+        primaryDict[ key ] = value;
+
+        secondaryDict[ value ] = key;
     }
 
     static bool IsEnglish( string word )
     {
-        foreach ( char c in word )
-        {
-            if ( c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' )
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return word.Any( c => ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) );
     }
 
     static void TranslateWord( string word )
     {
-        var dictionary = IsEnglish( word ) ? _dictionaryEnRu : _dictionaryRuEn;
+        MyDictionary dictionary = IsEnglish( word ) ? _dictionaryEnRu : _dictionaryRuEn;
 
         if ( dictionary.ContainsKey( word ) )
         {
@@ -91,8 +69,8 @@ class Program
             {
                 Console.Write( "Input translation or enter for quit: " );
                 string translation = Console.ReadLine();
-                
-                var otherDictionary = IsEnglish( word ) ? _dictionaryRuEn : _dictionaryEnRu;
+
+                MyDictionary otherDictionary = IsEnglish( word ) ? _dictionaryRuEn : _dictionaryEnRu;
                 AddWordPair( dictionary, otherDictionary, word, translation );
 
                 Console.WriteLine( "Word added to dictionary." );
@@ -104,9 +82,9 @@ class Program
     {
         List<string> lines = new List<string>();
 
-        foreach ( var pair in _dictionaryRuEn )
+        foreach ( ( string key, string value ) in _dictionaryRuEn )
         {
-            lines.Add( $"{pair.Key} : {pair.Value}" );
+            lines.Add( $"{key} : {value}" );
         }
 
         File.WriteAllLines( _filePath, lines );
@@ -114,29 +92,22 @@ class Program
 
     static void Main( string[] args )
     {
-        try
+        LoadDictionary();
+        Console.WriteLine( "Nice to meet you! I'm your personal translator" );
+
+        while ( true )
         {
-            LoadDictionary();
-            Console.WriteLine( "Nice to meet you! I'm your personal translator" );
-
-            while ( true )
+            Console.Write( "Enter word for translation or enter for quit: " );
+            string input = Console.ReadLine();
+            if ( string.IsNullOrEmpty( input ) )
             {
-                Console.Write( "Enter word for translation: " );
-                string input = Console.ReadLine();
-                if ( string.IsNullOrEmpty( input ) )
-                {
-                    SaveDictionary();
-                    break;
-                }
-
-                TranslateWord( input );
+                SaveDictionary();
+                break;
             }
 
-            SaveDictionary();
+            TranslateWord( input );
         }
-        catch ( Exception ex )
-        {
-            Console.WriteLine( $"Error: {ex.Message}" );
-        }
+
+        SaveDictionary();
     }
 }
