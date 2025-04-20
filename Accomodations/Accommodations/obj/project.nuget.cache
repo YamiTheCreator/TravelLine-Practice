@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "he84Za9JPes=",
+  "success": true,
+  "projectFilePath": "/Users/yami/Documents/RiderProjects/dotnet-lectures/Accomodations/Accommodations/Accommodations.csproj",
+  "expectedPackageFiles": [
+    "/Users/yami/.nuget/packages/microsoft.extensions.dependencyinjection/8.0.0/microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
+    "/Users/yami/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
