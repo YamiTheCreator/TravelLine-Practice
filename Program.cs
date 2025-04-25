@@ -1,68 +1,94 @@
-﻿namespace OrderManager;
+﻿using System.ComponentModel;
+
+namespace OrderManager;
 
 class Program
 {
-    static string ValidateInput( string promt )
+    private const char _confirmLiteral = 'y';
+
+    private static string TryGetValidInput( string prompt )
     {
-        string input;
-        do
+        Console.Write( prompt );
+
+        string? input = Console.ReadLine();
+
+        if ( string.IsNullOrWhiteSpace( input ) )
         {
-            Console.Write( promt );
-            input = Console.ReadLine();
-            if ( string.IsNullOrEmpty( input ) )
-            {
-                Console.WriteLine( "This field must not be empty. Please try again." );
-            }
-        } while ( string.IsNullOrWhiteSpace( input ) );
+            throw new ArgumentException( "Input cannot be empty" );
+        }
 
         return input;
     }
 
-    static void Request( out string product, out int amount, out string username, out string address )
+    private static int TryGetValidNumber( string prompt )
     {
-        product = ValidateInput( "Product name: " );
+        Console.Write( prompt );
+        string? input = Console.ReadLine();
 
-        Console.Write( "Enter amount of products: " );
-        while ( !int.TryParse( Console.ReadLine(), out amount ) || amount <= 0 )
+        if ( string.IsNullOrWhiteSpace( input ) )
         {
-            Console.WriteLine( "Invalid input. Please enter a positive number: " );
+            throw new ArgumentException( "Input cannot be empty" );
         }
 
-        username = ValidateInput( "Enter your name: " );
+        if ( !int.TryParse( input, out int number ) || number < 0 )
+        {
+            throw new ArgumentException( "Invalid number. Must be a positive integer" );
+        }
 
-        address = ValidateInput( "Enter your address: " );
+        return number;
     }
 
-    static bool Confirm( string product, int amount, string username, string address )
+    private static void Request( out string product, out int amount, out string username, out string address )
+    {
+        product = TryGetValidInput( "Product name: " );
+
+        amount = TryGetValidNumber( "Amount of product: " );
+
+        username = TryGetValidInput( "Enter your name: " );
+
+        address = TryGetValidInput( "Enter your address: " );
+    }
+
+    private static bool Confirm( string product, int amount, string username, string address )
     {
         Console.WriteLine( $"Hello, {username}, you have ordered {amount} {product} to {address}, is it right?" );
-        Console.Write( "Press Y/y to confirm, any other key to cancel: " );
+        Console.Write(
+            $"Press {char.ToUpper( _confirmLiteral ) + "/" + _confirmLiteral} to confirm, any other key to cancel: " );
         return Console.ReadLine().ToLower() == "y";
     }
 
-    static void Order( string product, int amount, string username, string address )
+    private static void Order( string product, int amount, string username, string address )
     {
         DateTime date = DateTime.Now.AddDays( 3 );
         Console.WriteLine(
-            $"{username}! Your {product} order in the amount of {amount} has been placed! Expect delivery to {address} by {date
-                :dd.MM.yyyy}" );
+            $"{username}! Your {product} order in the amount of {amount} has been placed! Expect delivery to {address} by {date:dd.MM.yyyy}" );
     }
 
-    static void Main( string[] args )
+    private static int Main()
     {
-        string product;
-        int amount;
-        string username;
-        string address;
-
-        Request( out product, out amount, out username, out address );
-        if ( Confirm( product, amount, username, address ) )
+        try
         {
+            string product;
+            int amount;
+            string username;
+            string address;
+
+            Request( out product, out amount, out username, out address );
+
+            if ( !Confirm( product, amount, username, address ) )
+            {
+                Console.WriteLine( "Your order could not be placed. Please try again later" );
+                return 0;
+            }
+
             Order( product, amount, username, address );
         }
-        else
+        catch ( Exception e )
         {
-            Console.WriteLine( "Order failed. Please try again." );
+            Console.WriteLine( e );
+            return 1;
         }
+
+        return 0;
     }
 }
