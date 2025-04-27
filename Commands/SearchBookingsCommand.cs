@@ -11,7 +11,8 @@ public class SearchBookingsCommand(
 {
     public void Execute()
     {
-        IEnumerable<Booking?> bookings = bookingService.SearchBookings(startDate, endDate, categoryName);
+        //убрал ?, потому что в случае если записей нет - вернется пустой список
+        IEnumerable<Booking> bookings = bookingService.SearchBookings(startDate, endDate, categoryName);
         if (bookings.Any())
         {
             Console.WriteLine($"Found {bookings.Count()} bookings for category '{categoryName}' between {startDate} and {endDate}:");

@@ -1,6 +1,6 @@
 namespace Accommodations.Commands;
 
-public interface ICommand
+public interface  ICommand
 {
     void Execute();
     void Undo();

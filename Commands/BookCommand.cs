@@ -14,7 +14,8 @@ public class BookCommand(IBookingService bookingService, BookingDto bookingDto) 
             CurrencyDto.Usd => Currency.Usd,
             CurrencyDto.Rub => Currency.Rub,
             CurrencyDto.Cny => Currency.Cny,
-            _ => throw new ArgumentOutOfRangeException()
+            //добавил сообщение для исключения
+            _ => throw new ArgumentOutOfRangeException("Invalid currency")
         };
         _executedBookingDto = bookingService.Book(bookingDto.UserId, bookingDto.Category, bookingDto.StartDate,
             bookingDto.EndDate, currency);
