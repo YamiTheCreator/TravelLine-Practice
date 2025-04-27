@@ -4,12 +4,13 @@ using MyDictionary = Dictionary<string, string>;
 
 class Program
 {
-    private static MyDictionary _dictionaryRuEn = new();
-    private static MyDictionary _dictionaryEnRu = new();
+    private static readonly MyDictionary _dictionaryRuEn = new();
+    private static readonly MyDictionary _dictionaryEnRu = new();
     private const string _filePath = "Dictionary.txt";
     private const char _separator = ':';
+    private const char _confirmLiteral = 'y';
 
-    static void LoadDictionary()
+    private static void LoadDictionary()
     {
         _dictionaryRuEn.Clear();
         _dictionaryEnRu.Clear();
@@ -20,27 +21,27 @@ class Program
             Console.WriteLine( $"File {_filePath} created" );
         }
 
-        using ( StreamReader sr = new StreamReader( _filePath ) )
+        using StreamReader sr = new( _filePath );
+        string? line;
+        while ( ( line = sr.ReadLine() ) != null )
         {
-            string line;
-            while ( ( line = sr.ReadLine() ) != null )
-            {
-                string[] tokens = line.Split( _separator, 2 );
+            string[] tokens = line.Split( _separator, 2 );
 
-                string key = tokens[ 0 ].Trim();
-                string value = tokens[ 1 ].Trim();
+            string key = tokens[ 0 ].Trim();
+            string value = tokens[ 1 ].Trim();
 
-                MyDictionary primaryDict = IsEnglish( key ) ? _dictionaryEnRu : _dictionaryRuEn;
-                MyDictionary secondaryDict = IsEnglish( key ) ? _dictionaryRuEn : _dictionaryEnRu;
+            MyDictionary primaryDict = IsEnglish( key ) ? _dictionaryEnRu : _dictionaryRuEn;
+            MyDictionary secondaryDict = IsEnglish( key ) ? _dictionaryRuEn : _dictionaryEnRu;
 
-                AddWordPair( primaryDict, secondaryDict, key, value );
-            }
-
-            Console.WriteLine( $"Loaded {_dictionaryRuEn.Count} dictionary entries." );
+            AddWordPair( primaryDict, secondaryDict, key, value );
         }
+
+        Console.WriteLine( $"Loaded {_dictionaryRuEn.Count} dictionary entries." );
     }
 
-    static void AddWordPair( Dictionary<string, string> primaryDict, Dictionary<string, string> secondaryDict,
+    private static void AddWordPair(
+        MyDictionary primaryDict,
+        MyDictionary secondaryDict,
         string key, string value )
     {
         primaryDict[ key ] = value;
@@ -48,12 +49,12 @@ class Program
         secondaryDict[ value ] = key;
     }
 
-    static bool IsEnglish( string word )
+    private static bool IsEnglish( string word )
     {
         return word.Any( c => ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) );
     }
 
-    static void TranslateWord( string word )
+    private static void TranslateWord( string word )
     {
         MyDictionary dictionary = IsEnglish( word ) ? _dictionaryEnRu : _dictionaryRuEn;
 
@@ -63,24 +64,29 @@ class Program
         }
         else
         {
-            Console.WriteLine( "Word not found. Do you want to add it to dictionary? (y/n)" );
-            string response = Console.ReadLine();
-            if ( response.ToLower() == "y" )
-            {
-                Console.Write( "Input translation or enter for quit: " );
-                string translation = Console.ReadLine();
-
-                MyDictionary otherDictionary = IsEnglish( word ) ? _dictionaryRuEn : _dictionaryEnRu;
-                AddWordPair( dictionary, otherDictionary, word, translation );
-
-                Console.WriteLine( "Word added to dictionary." );
-            }
+            AddTranslation(dictionary, word);
         }
     }
 
-    static void SaveDictionary()
+    private static void AddTranslation( MyDictionary dictionary, string word )
     {
-        List<string> lines = new List<string>();
+        Console.WriteLine( $"Word not found. Do you want to add it to dictionary? {char.ToUpper(_confirmLiteral) + '/' + _confirmLiteral}" );
+        string? response = Console.ReadLine();
+        if ( response.ToLower() == _confirmLiteral.ToString() )
+        {
+            Console.Write( "Input translation or enter for quit: " );
+            string? translation = Console.ReadLine();
+
+            MyDictionary otherDictionary = IsEnglish( word ) ? _dictionaryRuEn : _dictionaryEnRu;
+            AddWordPair( dictionary, otherDictionary, word, translation );
+
+            Console.WriteLine( "Word added to dictionary." );
+        }
+    }
+
+    private static void SaveDictionary()
+    {
+        List<string> lines = new();
 
         foreach ( ( string key, string value ) in _dictionaryRuEn )
         {
@@ -90,7 +96,7 @@ class Program
         File.WriteAllLines( _filePath, lines );
     }
 
-    static void Main( string[] args )
+    private static void Main()
     {
         LoadDictionary();
         Console.WriteLine( "Nice to meet you! I'm your personal translator" );
@@ -98,7 +104,7 @@ class Program
         while ( true )
         {
             Console.Write( "Enter word for translation or enter for quit: " );
-            string input = Console.ReadLine();
+            string? input = Console.ReadLine();
             if ( string.IsNullOrEmpty( input ) )
             {
                 SaveDictionary();
