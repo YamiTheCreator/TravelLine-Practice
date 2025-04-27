@@ -7,8 +7,8 @@ class Program
     private static readonly MyDictionary _dictionaryRuEn = new();
     private static readonly MyDictionary _dictionaryEnRu = new();
     private const string _filePath = "Dictionary.txt";
-    private const char _separator = ':';
-    private const char _confirmLiteral = 'y';
+    private const string _separator = ":";
+    private const string _confirmLiteral = "y";
 
     private static void LoadDictionary()
     {
@@ -70,9 +70,9 @@ class Program
 
     private static void AddTranslation( MyDictionary dictionary, string word )
     {
-        Console.WriteLine( $"Word not found. Do you want to add it to dictionary? {char.ToUpper(_confirmLiteral) + '/' + _confirmLiteral}" );
+        Console.WriteLine( $"Word not found. Do you want to add it to dictionary? {_confirmLiteral.ToUpper()}/{_confirmLiteral}" );
         string? response = Console.ReadLine();
-        if ( response.ToLower() == _confirmLiteral.ToString() )
+        if ( response.ToLower() == _confirmLiteral )
         {
             Console.Write( "Input translation or enter for quit: " );
             string? translation = Console.ReadLine();
@@ -90,7 +90,7 @@ class Program
 
         foreach ( ( string key, string value ) in _dictionaryRuEn )
         {
-            lines.Add( $"{key} : {value}" );
+            lines.Add( $"{key} {_separator} {value}" );
         }
 
         File.WriteAllLines( _filePath, lines );
