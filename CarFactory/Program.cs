@@ -5,7 +5,7 @@ namespace CarFactory;
 
 class Program
 {
-    static void Main()
+    private static void Main()
     {
         Console.WriteLine( "Welcome to car configurator!" );
 

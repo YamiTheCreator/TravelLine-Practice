@@ -11,7 +11,7 @@ public class CarConfigurator
 {
     public static ICar Configure()
     {
-        var bodyShapeType = AnsiConsole.Prompt(
+        CarBodyShapeType bodyShapeType = AnsiConsole.Prompt(
             new SelectionPrompt<CarBodyShapeType>()
                 .Title( "Select car body shape:" )
                 .AddChoices( Enum.GetValues<CarBodyShapeType>() )
@@ -24,7 +24,7 @@ public class CarConfigurator
             _ => throw new ArgumentException( "Invalid body shape" )
         };
 
-        var engineType = AnsiConsole.Prompt(
+        EngineType engineType = AnsiConsole.Prompt(
             new SelectionPrompt<EngineType>()
                 .Title( "Select engine type:" )
                 .AddChoices( Enum.GetValues<EngineType>() )
@@ -40,7 +40,7 @@ public class CarConfigurator
             _ => throw new ArgumentException( "Invalid engine type" )
         };
 
-        var transmissionType = AnsiConsole.Prompt(
+        TransmissionType transmissionType = AnsiConsole.Prompt(
             new SelectionPrompt<TransmissionType>()
                 .Title( "Select transmission type:" )
                 .AddChoices( Enum.GetValues<TransmissionType>() )
@@ -55,7 +55,7 @@ public class CarConfigurator
             _ => throw new ArgumentException( "Invalid transmission type" )
         };
 
-        var color = AnsiConsole.Prompt(
+        ColorType color = AnsiConsole.Prompt(
             new SelectionPrompt<ColorType>()
                 .Title( "Select car color:" )
                 .AddChoices( Enum.GetValues<ColorType>() )
