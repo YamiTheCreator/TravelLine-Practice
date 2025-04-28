@@ -16,7 +16,7 @@ public class GameManager
 
         while ( isGame )
         {
-            var choice = AnsiConsole.Prompt(
+            string choice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title( "What do you want to do?" )
                     .PageSize( 10 )
@@ -60,7 +60,7 @@ public class GameManager
         }
     }
 
-    private IFighter CreateCharacter()
+    private static IFighter CreateCharacter()
     {
         string GetName() => AnsiConsole.Prompt(
             new TextPrompt<string>( "What's your name, hero?" ) );
@@ -110,15 +110,9 @@ public class GameManager
         );
     }
 
-    private void StartSimulation( List<IFighter> fighters )
+    private static void StartSimulation( List<IFighter> fighters )
     {
-        var aliveFighters = fighters.Select( f => new Fighter(
-            f.Name,
-            f.Armor,
-            f.Health,
-            f.Strength,
-            f.Initiative ) ).Cast<IFighter>().ToList();
-
+        List<IFighter> aliveFighters = fighters.Select( f => FighterFactory.Clone( f ) ).ToList();
         int round = 1;
 
         while ( aliveFighters.Count > 1 )
@@ -130,33 +124,33 @@ public class GameManager
             aliveFighters.RemoveAll( f => f.Health <= 0 );
         }
 
-        var winner = aliveFighters.First();
+        IFighter winner = aliveFighters.First();
         AnsiConsole.MarkupLine( $"[green]Winner: {winner.Name} with {winner.Health} HP remaining![/]" );
     }
 
-    private void GoOneRound( List<IFighter> fighters )
+    private static void GoOneRound( List<IFighter> fighters )
     {
-        const float CRIT_CHANCE = 0.15f;
-        const float CRIT_MULTIPLIER = 1.5f;
+        const float critChance = 0.15f;
+        const float critMultiplier = 1.5f;
 
-        var orderedFighters = fighters.OrderByDescending( f => f.Initiative ).ToList();
+        List<IFighter> orderedFighters = fighters.OrderByDescending( f => f.Initiative ).ToList();
 
-        foreach ( var attacker in orderedFighters.Where( f => f.Health > 0 ) )
+        foreach ( IFighter attacker in orderedFighters.Where( f => f.Health > 0 ) )
         {
-            var possibleTargets = fighters.Where( f => f != attacker && f.Health > 0 ).ToList();
-            if ( !possibleTargets.Any() ) break;
+            List<IFighter> possibleTargets = fighters.Where( f => f != attacker && f.Health > 0 ).ToList();
+            if ( possibleTargets.Count > 0 ) break;
 
-            var target = possibleTargets[ Random.Shared.Next( possibleTargets.Count ) ];
+            IFighter target = possibleTargets[ Random.Shared.Next( possibleTargets.Count ) ];
 
             int baseDamage = Math.Max( attacker.Strength - target.Armor, 0 );
 
-            bool isCritical = Random.Shared.NextSingle() < CRIT_CHANCE;
+            bool isCritical = Random.Shared.NextSingle() < critChance;
 
             float damageMultiplier = 0.8f + ( Random.Shared.NextSingle() * 0.3f ); // 0.8-1.1
 
             if ( isCritical )
             {
-                damageMultiplier *= CRIT_MULTIPLIER;
+                damageMultiplier *= critMultiplier;
             }
 
             int randomizedDamage = ( int )Math.Round( baseDamage * damageMultiplier );

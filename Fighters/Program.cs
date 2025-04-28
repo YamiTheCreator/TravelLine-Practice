@@ -5,10 +5,10 @@ namespace Fighters;
 
 class Program
 {
-    static void Main()
+    private static void Main()
     {
         List<IFighter> fighters = new();
-        var gameManager = new GameManager();
+        GameManager gameManager = new();
         gameManager.StartGame( fighters );
     }
 }
