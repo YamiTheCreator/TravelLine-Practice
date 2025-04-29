@@ -1,119 +1,118 @@
-﻿namespace Dictionary;
-
-using MyDictionary = Dictionary<string, string>;
-
-class Program
+﻿namespace Dictionary
 {
-    private static readonly MyDictionary _dictionaryRuEn = new();
-    private static readonly MyDictionary _dictionaryEnRu = new();
-    private const string _filePath = "Dictionary.txt";
-    private const string _separator = ":";
-    private const string _confirmLiteral = "y";
+    using MyDictionary = Dictionary<string, string>;
 
-    private static void LoadDictionary()
+    internal static class Program
     {
-        _dictionaryRuEn.Clear();
-        _dictionaryEnRu.Clear();
+        private static readonly MyDictionary Dictionary = new();
+        private const string FilePath = "Dictionary.txt";
+        private const string Separator = ":";
+        private const string ConfirmLiteral = "y";
 
-        if ( !File.Exists( _filePath ) )
+        private static void LoadDictionary()
         {
-            File.Create( _filePath );
-            Console.WriteLine( $"File {_filePath} created" );
-        }
+            Dictionary.Clear();
 
-        using StreamReader sr = new( _filePath );
-        string? line;
-        while ( ( line = sr.ReadLine() ) != null )
-        {
-            string[] tokens = line.Split( _separator, 2 );
-
-            string key = tokens[ 0 ].Trim();
-            string value = tokens[ 1 ].Trim();
-
-            MyDictionary primaryDict = IsEnglish( key ) ? _dictionaryEnRu : _dictionaryRuEn;
-            MyDictionary secondaryDict = IsEnglish( key ) ? _dictionaryRuEn : _dictionaryEnRu;
-
-            AddWordPair( primaryDict, secondaryDict, key, value );
-        }
-
-        Console.WriteLine( $"Loaded {_dictionaryRuEn.Count} dictionary entries." );
-    }
-
-    private static void AddWordPair(
-        MyDictionary primaryDict,
-        MyDictionary secondaryDict,
-        string key, string value )
-    {
-        primaryDict[ key ] = value;
-
-        secondaryDict[ value ] = key;
-    }
-
-    private static bool IsEnglish( string word )
-    {
-        return word.Any( c => ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) );
-    }
-
-    private static void TranslateWord( string word )
-    {
-        MyDictionary dictionary = IsEnglish( word ) ? _dictionaryEnRu : _dictionaryRuEn;
-
-        if ( dictionary.ContainsKey( word ) )
-        {
-            Console.WriteLine( $"Translation: {dictionary[ word ]}" );
-        }
-        else
-        {
-            AddTranslation(dictionary, word);
-        }
-    }
-
-    private static void AddTranslation( MyDictionary dictionary, string word )
-    {
-        Console.WriteLine( $"Word not found. Do you want to add it to dictionary? {_confirmLiteral.ToUpper()}/{_confirmLiteral}" );
-        string? response = Console.ReadLine();
-        if ( response.ToLower() == _confirmLiteral )
-        {
-            Console.Write( "Input translation or enter for quit: " );
-            string? translation = Console.ReadLine();
-
-            MyDictionary otherDictionary = IsEnglish( word ) ? _dictionaryRuEn : _dictionaryEnRu;
-            AddWordPair( dictionary, otherDictionary, word, translation );
-
-            Console.WriteLine( "Word added to dictionary." );
-        }
-    }
-
-    private static void SaveDictionary()
-    {
-        List<string> lines = new();
-
-        foreach ( ( string key, string value ) in _dictionaryRuEn )
-        {
-            lines.Add( $"{key} {_separator} {value}" );
-        }
-
-        File.WriteAllLines( _filePath, lines );
-    }
-
-    private static void Main()
-    {
-        LoadDictionary();
-        Console.WriteLine( "Nice to meet you! I'm your personal translator" );
-
-        while ( true )
-        {
-            Console.Write( "Enter word for translation or enter for quit: " );
-            string? input = Console.ReadLine();
-            if ( string.IsNullOrEmpty( input ) )
+            if (!File.Exists(FilePath))
             {
-                SaveDictionary();
-                break;
+                File.Create(FilePath).Close();
+                Console.WriteLine($"File {FilePath} created");
+                return;
             }
 
-            TranslateWord( input );
+            using StreamReader sr = new(FilePath);
+            string? line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                string[] tokens = line.Split(Separator, 2);
+                if (tokens.Length != 2) continue;
+
+                string key = tokens[0].Trim();
+                string value = tokens[1].Trim();
+
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+
+                AddWordPair(key, value);
+            }
+
+            Console.WriteLine($"Loaded {Dictionary.Count / 2} dictionary entries.");
         }
 
-        SaveDictionary();
+        private static void AddWordPair(string key, string value)
+        {
+            Dictionary[key] = value;
+            Dictionary[value] = key;
+        }
+
+        private static void TranslateWord(string word)
+        {
+            if (Dictionary.TryGetValue(word, out string? translation))
+            {
+                Console.WriteLine($"Translation: {translation}");
+            }
+            else
+            {
+                Console.WriteLine($"Word not found. Do you want to add it to dictionary? ({ConfirmLiteral.ToUpper()}/N)");
+                string? response = Console.ReadLine()?.Trim().ToLower();
+
+                if (response == ConfirmLiteral)
+                {
+                    AddTranslation(word);
+                }
+            }
+        }
+
+        private static void AddTranslation(string word)
+        {
+            Console.Write("Input translation (or press Enter to cancel): ");
+            string? translation = Console.ReadLine()?.Trim();
+
+            if (string.IsNullOrWhiteSpace(translation))
+            {
+                Console.WriteLine("Operation cancelled.");
+                return;
+            }
+
+            AddWordPair(word, translation);
+            Console.WriteLine("Word added to dictionary.");
+        }
+
+        private static void SaveDictionary()
+        {
+            HashSet<string> savedPairs = [];
+            List<string> lines = [];
+
+            foreach (KeyValuePair<string, string> pair in Dictionary.Where(pair =>
+                     !savedPairs.Contains(pair.Value + Separator + pair.Key)))
+            {
+                lines.Add($"{pair.Key}{Separator}{pair.Value}");
+                savedPairs.Add(pair.Key + Separator + pair.Value);
+            }
+
+            File.WriteAllLines(FilePath, lines);
+        }
+
+        private static void Main()
+        {
+            LoadDictionary();
+            Console.WriteLine("Nice to meet you! I'm your personal translator");
+
+            while (true)
+            {
+                Console.Write("Enter word for translation (or press Enter to quit): ");
+                string? input = Console.ReadLine()?.Trim();
+                
+                if (string.IsNullOrEmpty(input))
+                {
+                    break;
+                }
+
+                TranslateWord(input);
+            }
+
+            SaveDictionary();
+        }
     }
 }
