@@ -31,7 +31,7 @@ namespace Fighters.GameEngine
                         AnsiConsole.Clear();
 
                         IFighter character = CreateCharacter();
-                        character.OutputFighterConfiguration();
+                        Console.WriteLine( character );
                         fighters.Add( character );
                         AnsiConsole.MarkupLine( $"[green]Character '{character.Name}' created successfully![/]" );
                         break;

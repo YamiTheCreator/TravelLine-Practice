@@ -16,9 +16,9 @@ namespace Fighters.Models.Fighters
 
         public int GetCurrentHealth();
 
-        void OutputFighterConfiguration();
-    
-        void TakeDamage(int damage);
+        public string ToString();
+
+        void TakeDamage( int damage );
         int CalculateDamage();
     }
 }

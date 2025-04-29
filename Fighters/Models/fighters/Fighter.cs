@@ -2,7 +2,6 @@ using Fighters.Models.Armors;
 using Fighters.Models.Classes;
 using Fighters.Models.Races;
 using Fighters.Models.Weapons;
-using Spectre.Console;
 
 namespace Fighters.Models.Fighters
 {
@@ -42,15 +41,15 @@ namespace Fighters.Models.Fighters
 
         public int CalculateDamage()
         {
-            const int critChancePercent = 15;
-            const int critMultiplierNumerator = 3;
-            const int critMultiplierDenominator = 2;
+            const int criticalChancePercent = 15;
+            const int criticalMultiplierNumerator = 3;
+            const int criticalMultiplierDenominator = 2;
 
             const int minDamageMultiplier = 8;
             const int maxDamageMultiplier = 11;
             const int multiplierDenominator = 10;
 
-            bool isCritical = Random.Shared.Next( 100 ) < critChancePercent;
+            bool isCritical = Random.Shared.Next( 100 ) < criticalChancePercent;
 
             int baseDamage = Math.Max( Strength - Armor, 0 );
 
@@ -58,7 +57,7 @@ namespace Fighters.Models.Fighters
 
             if ( isCritical )
             {
-                damageMultiplier = damageMultiplier * critMultiplierNumerator / critMultiplierDenominator;
+                damageMultiplier = damageMultiplier * criticalMultiplierNumerator / criticalMultiplierDenominator;
             }
 
             int finalDamage = Math.Max( baseDamage * damageMultiplier / multiplierDenominator, 1 );
@@ -66,15 +65,14 @@ namespace Fighters.Models.Fighters
             return finalDamage;
         }
 
-
-        public void OutputFighterConfiguration()
+        public override string ToString()
         {
-            AnsiConsole.MarkupLine( "\n[bold underline]Fighter Configuration:[/]" );
-            AnsiConsole.MarkupLine( $"[blue]Name:[/] [green]{Name}[/]" );
-            AnsiConsole.MarkupLine( $"[yellow]Armor:[/] [green]{Armor}[/]" );
-            AnsiConsole.MarkupLine( $"[red]Health:[/] [green]{Health}[/]" );
-            AnsiConsole.MarkupLine( $"[purple]Strength:[/] [green]{Strength}[/]" );
-            AnsiConsole.MarkupLine( $"[cyan]Initiative:[/] [green]{Initiative}[/]" );
+            return $"Fighter Configuration:\n" +
+                   $"Name: {Name}\n" +
+                   $"Armor: {Armor}\n" +
+                   $"Health: {Health}\n" +
+                   $"Strength: {Strength}\n" +
+                   $"Initiative: {Initiative}";
         }
 
         public int GetCurrentHealth()
