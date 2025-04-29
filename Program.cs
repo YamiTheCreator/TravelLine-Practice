@@ -1,115 +1,193 @@
 ﻿namespace Dictionary
 {
-    using MyDictionary = Dictionary<string, string>;
-
     internal static class Program
     {
-        private static readonly MyDictionary Dictionary = new();
-        private const string FilePath = "Dictionary.txt";
-        private const string Separator = ":";
-        private const string ConfirmLiteral = "y";
+        private static readonly Dictionary<string, HashSet<string>> _dictionary = new();
+        private const string _filePath = "Dictionary.txt";
+        private const string _separator = ":";
+        private const string _translationsSeparator = ",";
+        private const string _confirmLiteral = "y";
 
         private static void LoadDictionary()
         {
-            Dictionary.Clear();
+            _dictionary.Clear();
 
-            if (!File.Exists(FilePath))
+            if ( !File.Exists( _filePath ) )
             {
-                File.Create(FilePath).Close();
-                Console.WriteLine($"File {FilePath} created");
+                File.Create( _filePath ).Close();
+                Console.WriteLine( $"File {_filePath} created" );
                 return;
             }
 
-            using StreamReader sr = new(FilePath);
-            string? line;
-            while ((line = sr.ReadLine()) != null)
+            foreach ( string line in File.ReadAllLines( _filePath ) )
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if ( string.IsNullOrWhiteSpace( line ) )
+                {
+                    continue;
+                }
 
-                string[] tokens = line.Split(Separator, 2);
-                if (tokens.Length != 2) continue;
+                string[] tokens = line.Split( _separator, 2 );
+                if ( tokens.Length != 2 )
+                {
+                    continue;
+                }
 
-                string key = tokens[0].Trim();
-                string value = tokens[1].Trim();
+                string key = tokens[ 0 ].Trim();
+                string[] translations = tokens[ 1 ].Split( _translationsSeparator )
+                    .Select( t => t.Trim() )
+                    .Where( t => !string.IsNullOrWhiteSpace( t ) )
+                    .ToArray();
 
-                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+                if ( translations.Length == 0 )
+                {
+                    continue;
+                }
 
-                AddWordPair(key, value);
+                AddTranslations( key, translations );
             }
 
-            Console.WriteLine($"Loaded {Dictionary.Count / 2} dictionary entries.");
+            Console.WriteLine( $"Loaded {_dictionary.Count} dictionary entries." );
         }
 
-        private static void AddWordPair(string key, string value)
+        private static void AddTranslations( string word, IEnumerable<string> translations )
         {
-            Dictionary[key] = value;
-            Dictionary[value] = key;
-        }
-
-        private static void TranslateWord(string word)
-        {
-            if (Dictionary.TryGetValue(word, out string? translation))
+            if ( !_dictionary.TryGetValue( word, out HashSet<string>? translationSet ) )
             {
-                Console.WriteLine($"Translation: {translation}");
+                translationSet = [ ];
+                _dictionary[ word ] = translationSet;
+            }
+
+            foreach ( string translation in translations )
+            {
+                translationSet.Add( translation );
+
+                if ( !_dictionary.TryGetValue( translation, out HashSet<string>? reverseSet ) )
+                {
+                    reverseSet = [ ];
+                    _dictionary[ translation ] = reverseSet;
+                }
+
+                reverseSet.Add( word );
+            }
+        }
+
+        private static void TranslateWord( string word )
+        {
+            if ( _dictionary.TryGetValue( word, out HashSet<string>? translations ) )
+            {
+                Console.WriteLine( $"Available translations: {string.Join( ", ", translations )}" );
+
+                Console.WriteLine( $"Do you want to add another translation? ({_confirmLiteral.ToUpper()}/N)" );
+                string? response = Console.ReadLine()?.Trim().ToLower();
+
+                if ( response == _confirmLiteral )
+                {
+                    AddNewTranslation( word );
+                }
             }
             else
             {
-                Console.WriteLine($"Word not found. Do you want to add it to dictionary? ({ConfirmLiteral.ToUpper()}/N)");
+                Console.WriteLine(
+                    $"Word not found. Do you want to add it to dictionary? ({_confirmLiteral.ToUpper()}/N)" );
                 string? response = Console.ReadLine()?.Trim().ToLower();
 
-                if (response == ConfirmLiteral)
+                if ( response == _confirmLiteral )
                 {
-                    AddTranslation(word);
+                    AddNewWord( word );
                 }
             }
         }
 
-        private static void AddTranslation(string word)
+        private static void AddNewTranslation( string word )
         {
-            Console.Write("Input translation (or press Enter to cancel): ");
-            string? translation = Console.ReadLine()?.Trim();
+            Console.Write(
+                $"Enter new translations separated by '{_translationsSeparator}' (or press Enter to cancel): " );
+            string? input = Console.ReadLine()?.Trim();
 
-            if (string.IsNullOrWhiteSpace(translation))
+            if ( string.IsNullOrWhiteSpace( input ) )
             {
-                Console.WriteLine("Operation cancelled.");
+                Console.WriteLine( "Operation cancelled." );
                 return;
             }
 
-            AddWordPair(word, translation);
-            Console.WriteLine("Word added to dictionary.");
+            string[] newTranslations = input.Split( _translationsSeparator )
+                .Select( t => t.Trim() )
+                .Where( t => !string.IsNullOrWhiteSpace( t ) )
+                .ToArray();
+
+            if ( newTranslations.Length == 0 )
+            {
+                Console.WriteLine( "No valid translations provided." );
+                return;
+            }
+
+            AddTranslations( word, newTranslations );
+            Console.WriteLine( "Translations added to dictionary." );
+        }
+
+        private static void AddNewWord( string word )
+        {
+            Console.Write(
+                $"Enter all translations separated by '{_translationsSeparator}' (or press Enter to cancel): " );
+            string? input = Console.ReadLine()?.Trim();
+
+            if ( string.IsNullOrWhiteSpace( input ) )
+            {
+                Console.WriteLine( "Operation cancelled." );
+                return;
+            }
+
+            string[] translations = input.Split( _translationsSeparator )
+                .Select( t => t.Trim() )
+                .Where( t => !string.IsNullOrWhiteSpace( t ) )
+                .ToArray();
+
+            if ( translations.Length == 0 )
+            {
+                Console.WriteLine( "No valid translations provided." );
+                return;
+            }
+
+            AddTranslations( word, translations );
+            Console.WriteLine( "Word and translations added to dictionary." );
         }
 
         private static void SaveDictionary()
         {
-            HashSet<string> savedPairs = [];
-            List<string> lines = [];
+            HashSet<string> savedWords = [ ];
+            List<string> lines = [ ];
 
-            foreach (KeyValuePair<string, string> pair in Dictionary.Where(pair =>
-                     !savedPairs.Contains(pair.Value + Separator + pair.Key)))
+            foreach ( KeyValuePair<string, HashSet<string>> pair in _dictionary.Where( pair =>
+                         !savedWords.Contains( pair.Key ) ) )
             {
-                lines.Add($"{pair.Key}{Separator}{pair.Value}");
-                savedPairs.Add(pair.Key + Separator + pair.Value);
+                lines.Add( $"{pair.Key}{_separator}{string.Join( _translationsSeparator, pair.Value )}" );
+                savedWords.Add( pair.Key );
+
+                foreach ( string translation in pair.Value )
+                {
+                    savedWords.Add( translation );
+                }
             }
 
-            File.WriteAllLines(FilePath, lines);
+            File.WriteAllLines( _filePath, lines );
         }
 
         private static void Main()
         {
             LoadDictionary();
-            Console.WriteLine("Nice to meet you! I'm your personal translator");
+            Console.WriteLine( "Welcome to Multi-Translator Dictionary!" );
 
-            while (true)
+            while ( true )
             {
-                Console.Write("Enter word for translation (or press Enter to quit): ");
+                Console.Write( "Enter word for translation (or press Enter to quit): " );
                 string? input = Console.ReadLine()?.Trim();
-                
-                if (string.IsNullOrEmpty(input))
+
+                if ( string.IsNullOrEmpty( input ) )
                 {
                     break;
                 }
 
-                TranslateWord(input);
+                TranslateWord( input );
             }
 
             SaveDictionary();
