@@ -1,10 +1,11 @@
-namespace CarFactory.Engines;
-
-public enum EngineType
+namespace CarFactory.Engines
 {
-    Gasoline,
-    Diesel,
-    Electricity,
-    Hybrid,
-    GasPowered
+    public enum EngineType
+    {
+        Gasoline,
+        Diesel,
+        Electricity,
+        Hybrid,
+        GasPowered
+    }
 }

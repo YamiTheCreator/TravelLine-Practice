@@ -1,16 +1,16 @@
 ﻿using CarFactory.Cars;
 using CarFactory.Services;
 
-namespace CarFactory;
-
-class Program
+namespace CarFactory
 {
-    private static void Main()
+    internal static class Program
     {
-        Console.WriteLine( "Welcome to car configurator!" );
+        private static void Main()
+        {
+            Console.WriteLine( "Welcome to car configurator!" );
 
-        ICar car = CarConfigurator.Configure();
-
-        Console.WriteLine( car.GetConfiguration() );
+            ICar car = CarConfigurator.Configure();
+            car.OutputCarConfiguration();
+        }
     }
 }

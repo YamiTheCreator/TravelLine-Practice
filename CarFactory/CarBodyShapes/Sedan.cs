@@ -1,6 +1,7 @@
-namespace CarFactory.CarBodyShapes;
-
-public class Sedan : ICarBodyShape
+namespace CarFactory.CarBodyShapes
 {
-    public CarBodyShapeType Type => CarBodyShapeType.Sedan;
+    public class Sedan : ICarBodyShape
+    {
+        public CarBodyShapeType Type => CarBodyShapeType.Sedan;
+    }
 }

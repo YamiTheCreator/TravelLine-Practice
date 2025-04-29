@@ -1,11 +1,12 @@
-namespace CarFactory.Transmissions;
-
-public class VariableTransmission : ITransmission
+namespace CarFactory.Transmissions
 {
-    public TransmissionType Type => TransmissionType.Variable;
+    public class VariableTransmission : ITransmission
+    {
+        public TransmissionType Type => TransmissionType.Variable;
 
-    //вообще виртуальные передачи, но так нагляднее
-    public int GearCount => 7;
+        //вообще виртуальные передачи, но так нагляднее
+        public int GearCount => 7;
 
-    public double Efficiency => 0.80;
+        public double Efficiency => 0.80;
+    }
 }

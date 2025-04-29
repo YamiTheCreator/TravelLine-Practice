@@ -1,9 +1,10 @@
-namespace CarFactory.Transmissions;
-
-public class AutomaticTransmission : ITransmission
+namespace CarFactory.Transmissions
 {
-    public TransmissionType Type => TransmissionType.Automatic;
-    public int GearCount => 8;
+    public class AutomaticTransmission : ITransmission
+    {
+        public TransmissionType Type => TransmissionType.Automatic;
+        public int GearCount => 8;
 
-    public double Efficiency => 0.85;
+        public double Efficiency => 0.85;
+    }
 }

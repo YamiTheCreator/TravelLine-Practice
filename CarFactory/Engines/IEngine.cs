@@ -1,8 +1,9 @@
-namespace CarFactory.Engines;
-
-public interface IEngine
+namespace CarFactory.Engines
 {
-    public EngineType Type { get; }
-    public int Power { get; }
-    public double Efficiency { get; }
+    public interface IEngine
+    {
+        public EngineType Type { get; }
+        public int Power { get; }
+        public double Efficiency { get; }
+    }
 }

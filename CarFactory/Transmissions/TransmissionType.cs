@@ -1,9 +1,10 @@
-namespace CarFactory.Transmissions;
-
-public enum TransmissionType
+namespace CarFactory.Transmissions
 {
-    Manual,
-    Automatic,
-    Robotic,
-    Variable
+    public enum TransmissionType
+    {
+        Manual,
+        Automatic,
+        Robotic,
+        Variable
+    }
 }

@@ -1,6 +1,7 @@
-namespace CarFactory.CarBodyShapes;
-
-public interface ICarBodyShape
+namespace CarFactory.CarBodyShapes
 {
-    public CarBodyShapeType Type { get; }
+    public interface ICarBodyShape
+    {
+        public CarBodyShapeType Type { get; }
+    }
 }

@@ -1,9 +1,10 @@
-namespace CarFactory.Transmissions;
-
-public interface ITransmission
+namespace CarFactory.Transmissions
 {
-    public TransmissionType Type { get; }
-    public int GearCount { get; }
+    public interface ITransmission
+    {
+        public TransmissionType Type { get; }
+        public int GearCount { get; }
 
-    public double Efficiency { get; }
+        public double Efficiency { get; }
+    }
 }

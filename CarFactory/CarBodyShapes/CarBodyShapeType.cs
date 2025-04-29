@@ -1,8 +1,9 @@
-namespace CarFactory.CarBodyShapes;
-
-public enum CarBodyShapeType
+namespace CarFactory.CarBodyShapes
 {
-    Hatchback,
-    Sedan,
-    StationWagon
+    public enum CarBodyShapeType
+    {
+        Hatchback,
+        Sedan,
+        StationWagon
+    }
 }
