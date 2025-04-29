@@ -64,7 +64,7 @@ namespace Fighters.GameEngine
         private static IFighter CreateCharacter()
         {
             return FighterFactory.Create(
-                GetName("What's your name, hero?"),
+                GetName( "What's your name, hero?" ),
                 SelectOption<IArmor>( "armor", "blue",
                 [
                     new Helmet(),
@@ -152,10 +152,10 @@ namespace Fighters.GameEngine
                     $"[blue]{target.Name}[/] has [red]{target.GetCurrentHealth()}[/] HP left." );
             }
         }
-    
-        private static string GetName(string prompt) => AnsiConsole.Prompt(
+
+        private static string GetName( string prompt ) => AnsiConsole.Prompt(
             new TextPrompt<string>( prompt ) );
-        
+
         private const int _pageSize = 10;
     }
 }
