@@ -49,16 +49,16 @@ namespace CarFactory.Cars
 
         public void OutputCarConfiguration()
         {
-            AnsiConsole.MarkupLine("\n[bold underline]Your car configuration:[/]");
-            AnsiConsole.MarkupLine($"[blue]Engine:[/] [green]{Engine.Type}[/]");
-            AnsiConsole.MarkupLine($"[blue]Engine power:[/] [green]{Engine.Power} HP[/]");
-            AnsiConsole.MarkupLine($"[blue]Engine efficiency:[/] [green]{Engine.Efficiency:P0}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Transmission:[/] [green]{Transmission.Type}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Gear Count:[/] [green]{Transmission.GearCount}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Transmission efficiency:[/] [green]{Transmission.Efficiency:P0}[/]");
-            AnsiConsole.MarkupLine($"[red]Max Speed:[/] [bold green]{MaxSpeed} km/h[/]");
-            AnsiConsole.MarkupLine($"[purple]BodyShape:[/] [green]{BodyShape.Type}[/]");
-            AnsiConsole.MarkupLine($"[purple]Color:[/] [green]{Color}[/]");
+            AnsiConsole.MarkupLine( "\n[bold underline]Your car configuration:[/]" );
+            AnsiConsole.MarkupLine( $"[blue]Engine:[/] [green]{Engine.Type}[/]" );
+            AnsiConsole.MarkupLine( $"[blue]Engine power:[/] [green]{Engine.Power} HP[/]" );
+            AnsiConsole.MarkupLine( $"[blue]Engine efficiency:[/] [green]{Engine.Efficiency:P0}[/]" );
+            AnsiConsole.MarkupLine( $"[yellow]Transmission:[/] [green]{Transmission.Type}[/]" );
+            AnsiConsole.MarkupLine( $"[yellow]Gear Count:[/] [green]{Transmission.GearCount}[/]" );
+            AnsiConsole.MarkupLine( $"[yellow]Transmission efficiency:[/] [green]{Transmission.Efficiency:P0}[/]" );
+            AnsiConsole.MarkupLine( $"[red]Max Speed:[/] [bold green]{MaxSpeed} km/h[/]" );
+            AnsiConsole.MarkupLine( $"[purple]BodyShape:[/] [green]{BodyShape.Type}[/]" );
+            AnsiConsole.MarkupLine( $"[purple]Color:[/] [green]{Color}[/]" );
         }
 
         private const double _wattsToHorsepower = 735.5;
