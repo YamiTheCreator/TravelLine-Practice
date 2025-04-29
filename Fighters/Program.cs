@@ -1,14 +1,14 @@
 ﻿using Fighters.GameEngine;
-using Fighters.models.fighters;
+using Fighters.Models.Fighters;
 
-namespace Fighters;
-
-class Program
+namespace Fighters
 {
-    private static void Main()
+    internal static class Program
     {
-        List<IFighter> fighters = new();
-        GameManager gameManager = new();
-        gameManager.StartGame( fighters );
+        private static void Main()
+        {
+            List<IFighter> fighters = [ ];
+            GameManager.GameController( fighters );
+        }
     }
 }
