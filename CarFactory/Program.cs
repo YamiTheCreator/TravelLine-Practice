@@ -10,7 +10,7 @@ namespace CarFactory
             Console.WriteLine( "Welcome to car configurator!" );
 
             ICar car = CarConfigurator.Configure();
-            car.OutputCarConfiguration();
+            Console.WriteLine( car );
         }
     }
 }

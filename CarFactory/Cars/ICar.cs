@@ -13,6 +13,6 @@ namespace CarFactory.Cars
         ColorType Color { get; }
         int MaxSpeed { get; }
 
-        void OutputCarConfiguration();
+        public string ToString();
     }
 }

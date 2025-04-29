@@ -47,18 +47,14 @@ namespace CarFactory.Cars
             }
         }
 
-        public void OutputCarConfiguration()
+        public override string ToString()
         {
-            AnsiConsole.MarkupLine( "\n[bold underline]Your car configuration:[/]" );
-            AnsiConsole.MarkupLine( $"[blue]Engine:[/] [green]{Engine.Type}[/]" );
-            AnsiConsole.MarkupLine( $"[blue]Engine power:[/] [green]{Engine.Power} HP[/]" );
-            AnsiConsole.MarkupLine( $"[blue]Engine efficiency:[/] [green]{Engine.Efficiency:P0}[/]" );
-            AnsiConsole.MarkupLine( $"[yellow]Transmission:[/] [green]{Transmission.Type}[/]" );
-            AnsiConsole.MarkupLine( $"[yellow]Gear Count:[/] [green]{Transmission.GearCount}[/]" );
-            AnsiConsole.MarkupLine( $"[yellow]Transmission efficiency:[/] [green]{Transmission.Efficiency:P0}[/]" );
-            AnsiConsole.MarkupLine( $"[red]Max Speed:[/] [bold green]{MaxSpeed} km/h[/]" );
-            AnsiConsole.MarkupLine( $"[purple]BodyShape:[/] [green]{BodyShape.Type}[/]" );
-            AnsiConsole.MarkupLine( $"[purple]Color:[/] [green]{Color}[/]" );
+            return $"Car Configuration:\n" +
+                   $"Engine: {Engine.Type} ({Engine.Power} HP, Efficiency: {Engine.Efficiency:P0})\n" +
+                   $"Transmission: {Transmission.Type} ({Transmission.GearCount} gears, Efficiency: {Transmission.Efficiency:P0})\n" +
+                   $"Max Speed: {MaxSpeed} km/h\n" +
+                   $"Body: {BodyShape.Type}\n" +
+                   $"Color: {Color}";
         }
 
         private const double _wattsToHorsepower = 735.5;
