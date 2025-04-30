@@ -1,94 +1,88 @@
-﻿using System.ComponentModel;
-
-namespace OrderManager;
-
-class Program
+﻿namespace OrderManager
 {
-    private const char _confirmLiteral = 'y';
-
-    private static string TryGetValidInput( string prompt )
+    internal static class Program
     {
-        Console.Write( prompt );
+        private const string _confirmLiteral = "y";
 
-        string? input = Console.ReadLine();
-
-        if ( string.IsNullOrWhiteSpace( input ) )
+        private static string TryGetValidInput( string prompt )
         {
-            throw new ArgumentException( "Input cannot be empty" );
-        }
+            Console.Write( prompt );
 
-        return input;
-    }
+            string? input = Console.ReadLine();
 
-    private static int TryGetValidNumber( string prompt )
-    {
-        Console.Write( prompt );
-        string? input = Console.ReadLine();
-
-        if ( string.IsNullOrWhiteSpace( input ) )
-        {
-            throw new ArgumentException( "Input cannot be empty" );
-        }
-
-        if ( !int.TryParse( input, out int number ) || number < 0 )
-        {
-            throw new ArgumentException( "Invalid number. Must be a positive integer" );
-        }
-
-        return number;
-    }
-
-    private static void Request( out string product, out int amount, out string username, out string address )
-    {
-        product = TryGetValidInput( "Product name: " );
-
-        amount = TryGetValidNumber( "Amount of product: " );
-
-        username = TryGetValidInput( "Enter your name: " );
-
-        address = TryGetValidInput( "Enter your address: " );
-    }
-
-    private static bool Confirm( string product, int amount, string username, string address )
-    {
-        Console.WriteLine( $"Hello, {username}, you have ordered {amount} {product} to {address}, is it right?" );
-        Console.Write(
-            $"Press {char.ToUpper( _confirmLiteral ) + "/" + _confirmLiteral} to confirm, any other key to cancel: " );
-        return Console.ReadLine().ToLower() == "y";
-    }
-
-    private static void Order( string product, int amount, string username, string address )
-    {
-        DateTime date = DateTime.Now.AddDays( 3 );
-        Console.WriteLine(
-            $"{username}! Your {product} order in the amount of {amount} has been placed! Expect delivery to {address} by {date:dd.MM.yyyy}" );
-    }
-
-    private static int Main()
-    {
-        try
-        {
-            string product;
-            int amount;
-            string username;
-            string address;
-
-            Request( out product, out amount, out username, out address );
-
-            if ( !Confirm( product, amount, username, address ) )
+            if ( string.IsNullOrWhiteSpace( input ) )
             {
-                Console.WriteLine( "Your order could not be placed. Please try again later" );
-                return 0;
+                throw new ArgumentException( "Input cannot be empty" );
             }
 
-            Order( product, amount, username, address );
-        }
-        catch ( Exception e )
-        {
-            Console.WriteLine( e );
-            return 1;
+            return input;
         }
 
-        return 0;
+        private static int TryGetValidNumber( string prompt )
+        {
+            Console.Write( prompt );
+            string? input = Console.ReadLine();
+
+            if ( string.IsNullOrWhiteSpace( input ) )
+            {
+                throw new ArgumentException( "Input cannot be empty" );
+            }
+
+            if ( !int.TryParse( input, out int number ) || number < 0 )
+            {
+                throw new ArgumentException( "Invalid number. Must be a positive integer" );
+            }
+
+            return number;
+        }
+
+        private static void Request( out string product, out int amount, out string username, out string address )
+        {
+            product = TryGetValidInput( "Product name: " );
+
+            amount = TryGetValidNumber( "Amount of product: " );
+
+            username = TryGetValidInput( "Enter your name: " );
+
+            address = TryGetValidInput( "Enter your address: " );
+        }
+
+        private static bool Confirm( string product, int amount, string username, string address )
+        {
+            Console.WriteLine( $"Hello, {username}, you have ordered {amount} {product} to {address}, is it right?" );
+            Console.Write(
+                $"Press {_confirmLiteral.ToUpper() + "/" + _confirmLiteral} to confirm, any other key to cancel: " );
+            return Console.ReadLine()?.ToLower() == _confirmLiteral;
+        }
+
+        private static void Order( string product, int amount, string username, string address )
+        {
+            DateTime date = DateTime.Now.AddDays( 3 );
+            Console.WriteLine(
+                $"{username}! Your {product} order in the amount of {amount} has been placed! Expect delivery to {address} by {date:dd.MM.yyyy}" );
+        }
+
+        private static int Main()
+        {
+            try
+            {
+                Request( out string product, out int amount, out string username, out string address );
+
+                if ( !Confirm( product, amount, username, address ) )
+                {
+                    Console.WriteLine( "Your order could not be placed. Please try again later" );
+                    return 0;
+                }
+
+                Order( product, amount, username, address );
+            }
+            catch ( Exception e )
+            {
+                Console.WriteLine( e );
+                return 1;
+            }
+
+            return 0;
+        }
     }
 }
