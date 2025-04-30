@@ -93,7 +93,7 @@
 
                 if ( response == _confirmLiteral )
                 {
-                    AddNewWord( word );
+                    AddNewTranslation( word );
                 }
             }
         }
@@ -122,34 +122,7 @@
             }
 
             AddTranslations( word, newTranslations );
-            Console.WriteLine( "Translations added to dictionary." );
-        }
-
-        private static void AddNewWord( string word )
-        {
-            Console.Write(
-                $"Enter all translations separated by '{_translationsSeparator}' (or press Enter to cancel): " );
-            string? input = Console.ReadLine()?.Trim();
-
-            if ( string.IsNullOrWhiteSpace( input ) )
-            {
-                Console.WriteLine( "Operation cancelled." );
-                return;
-            }
-
-            string[] translations = input.Split( _translationsSeparator )
-                .Select( t => t.Trim() )
-                .Where( t => !string.IsNullOrWhiteSpace( t ) )
-                .ToArray();
-
-            if ( translations.Length == 0 )
-            {
-                Console.WriteLine( "No valid translations provided." );
-                return;
-            }
-
-            AddTranslations( word, translations );
-            Console.WriteLine( "Word and translations added to dictionary." );
+            Console.WriteLine( "Translations/words added to dictionary." );
         }
 
         private static void SaveDictionary()
