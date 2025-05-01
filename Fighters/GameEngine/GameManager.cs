@@ -7,14 +7,14 @@ using Spectre.Console;
 
 namespace Fighters.GameEngine
 {
-    public class GameManager
+    public static class GameManager
     {
         public static void GameController( List<IFighter> fighters )
         {
             Console.WriteLine( "Greetings! Welcome to Fighters!" );
-            bool isGame = true;
+            bool isGameRunning = true;
 
-            while ( isGame )
+            while ( isGameRunning )
             {
                 string choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
@@ -54,7 +54,7 @@ namespace Fighters.GameEngine
                     case "Exit":
                         AnsiConsole.Clear();
 
-                        isGame = false;
+                        isGameRunning = false;
                         AnsiConsole.MarkupLine( "[yellow]Thank you for playing! Goodbye![/]" );
                         break;
                 }

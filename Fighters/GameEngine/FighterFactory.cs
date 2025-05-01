@@ -6,7 +6,7 @@ using Fighters.Models.Weapons;
 
 namespace Fighters.GameEngine
 {
-    public class FighterFactory
+    public static class FighterFactory
     {
         public static IFighter Create( string name, IArmor armor, IClass fighterClass, IRace race, IWeapon weapon )
         {
