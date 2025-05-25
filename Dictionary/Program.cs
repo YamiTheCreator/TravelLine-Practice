@@ -149,18 +149,22 @@
         {
             LoadDictionary();
             Console.WriteLine( "Welcome to Multi-Translator Dictionary!" );
+            bool isDictionaryActive = true;
 
-            while ( true )
+            while ( isDictionaryActive )
             {
                 Console.Write( "Enter word for translation (or press Enter to quit): " );
                 string? input = Console.ReadLine()?.Trim();
 
                 if ( string.IsNullOrEmpty( input ) )
                 {
-                    break;
+                    isDictionaryActive = false;
                 }
 
-                TranslateWord( input );
+                if ( input != null )
+                {
+                    TranslateWord( input );
+                }
             }
 
             SaveDictionary();
