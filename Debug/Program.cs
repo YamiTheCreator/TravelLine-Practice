@@ -1,3 +1,0 @@
-﻿using Accommodations;
-
-AccommodationsProcessor.Run();
