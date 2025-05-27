@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Json diff</title>
+    <link rel="stylesheet" href="./styles/style.css" />
+  </head>
+  <body>
+
+  <header class="header">
+  <span class="header__logo">
+    JSON-DIFF
+  </span>
+  <div class="header__auth">
+    <span class="header__auth-text hidden">Hello, <span id="username-text"></span>!</span>
+    <button class="header__auth-button">Log In</button>
+  </div>
+  </header>
+  <main class="main">
+  <section class="main__promo">
+    <h1>Compare two objects and see the differences</h1>
+    <button class="promo__button hidden">Start</button>
+  </section>
+
+  <section class="main__sign hidden">
+    <h2>Login Form</h2>
+    <form class="sign__form" action="">
+      <label class="form__label" for="form__input">login</label>
+      <input id="form__input" type="text" placeholder="Alexey Ivanov"></input>
+      <span class="form__error hidden">Это поле не должно быть пустым!</span>
+      <button class="form__button">sign in</button>
+    </form>
+  </section>
+
+  <section class="main__content hidden">
+    <form class="content__form">
+      <label for="oldJson">Old json</label>
+      <textarea id="oldJson" rows="10" cols="50">
+  {
+  "timeout": 20,
+  "verbose": true,
+  "host": "google.com"
+  }
+      </textarea>
+      <label for="newJson">New json</label>
+      <textarea id="newJson" rows="10" cols="50">
+  {
+  "timeout": 50,
+  "proxy": "888.888.88.88",
+  "host": "google.com"
+  }
+      </textarea>
+      <button>Show difference</button>
+    </form>
+    <div class="content__result"><div>
+  </section>
+  </main>
+
+    <script type="module" src="./src/router.js"></script>
+    <script type="module" src="./src/index.js"></script>
+  </body>
+</html>
