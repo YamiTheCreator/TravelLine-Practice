@@ -5,9 +5,11 @@ const InsertPreview: React.FC = memo(() => {
     <div
       className="my-2 rounded-2"
       style={{
-        border: "2px dotted #0d6efd",
+        border: "3px dotted #0d6efd",
+        backgroundColor: "rgb(112, 169, 255)",
         borderRadius: "4px",
         height: "60px",
+        opacity: "30%",
       }}
     ></div>
   );

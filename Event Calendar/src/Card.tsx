@@ -49,7 +49,8 @@ const CardComponent: React.FC<CardProps> = memo(
         style={{
           opacity: isDragging ? 0.5 : 1,
           cursor: "grab",
-          border: isDragging ? "2px dotted gray" : "",
+          border: isDragging ? "3px dotted gray" : "",
+          backgroundColor: isDragging ? "#EEEEEE" : "",
         }}
         onMouseDown={handleMouseDown}
       >
