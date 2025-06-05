@@ -156,14 +156,13 @@
                 Console.Write( "Enter word for translation (or press Enter to quit): " );
                 string? input = Console.ReadLine()?.Trim();
 
-                if ( string.IsNullOrEmpty( input ) )
-                {
-                    isDictionaryActive = false;
-                }
-
-                if ( input != null )
+                if ( !string.IsNullOrWhiteSpace( input ) )
                 {
                     TranslateWord( input );
+                }
+                else
+                {
+                    isDictionaryActive = false;
                 }
             }
 
