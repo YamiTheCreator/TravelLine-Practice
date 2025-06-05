@@ -1,19 +1,26 @@
 using Domain.Entities;
+using Domain.Repositories;
 
 namespace Domain.Services;
 
 public interface IReservationService
 {
-    Task<Reservation?> GetReservationByIdAsync(Guid id);
+    Reservation CreateReservation(
+        Guid propertyId,
+        Guid roomTypeId,
+        DateTime arrivalDate,
+        DateTime departureDate,
+        int personCount,
+        string guestName,
+        string guestPhoneNumber );
 
-    Task<IEnumerable<Reservation>> GetReservationsAsync(
+    void CancelReservation( Guid reservationId, bool softDelete = true );
+    Reservation? GetReservation( Guid id );
+
+    IEnumerable<Reservation> GetReservations(
         Guid? propertyId = null,
         Guid? roomTypeId = null,
-        DateTime? startDate = null,
-        DateTime? endDate = null,
-        string? guestName = null);
-
-    Task<Reservation> CreateReservationAsync(Reservation reservation);
-    Task<bool> CancelReservationAsync(Guid id);
-    Task<bool> IsRoomTypeAvailableAsync(Guid roomTypeId, DateTime arrivalDate, DateTime departureDate);
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        string? guestName = null );
 }

@@ -1,88 +1,51 @@
-using System.ComponentModel.DataAnnotations;
 using AutoMapper;
-using Domain.Repositories;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Contracts;
+using Web_Api.Contracts;
 
-namespace WebApi.Controllers;
+namespace Web_Api.Controllers;
 
 [ApiController]
-[Route("api/search")]
+[Route( "api/[controller]" )]
 public class SearchController : ControllerBase
 {
-    private readonly IPropertyRepository _propertyRepository;
-    private readonly IReservationService _reservationService;
+    private readonly ISearchService _searchService;
+    private readonly ILogger<ReservationsController> _logger;
     private readonly IMapper _mapper;
 
-    public SearchController(
-        IPropertyRepository propertyRepository,
-        IReservationService reservationService,
-        IMapper mapper)
+    public SearchController( ISearchService searchService, ILogger<ReservationsController> logger, IMapper mapper )
     {
-        _propertyRepository = propertyRepository;
-        _reservationService = reservationService;
         _mapper = mapper;
+        _logger = logger;
+        _searchService = searchService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Search(
-        [FromQuery] [Required] string city,
-        [FromQuery] [Required] DateTime arrivalDate,
-        [FromQuery] [Required] DateTime departureDate,
-        [FromQuery] [Required, Range(1, 20)] int guests,
-        [FromQuery] decimal? maxPrice)
+    [HttpGet( "search" )]
+    public IActionResult SearchAvailableRooms( [FromQuery] SearchAvailableRoomsContract dto )
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        if (arrivalDate >= departureDate)
-            return BadRequest("Departure date must be after arrival date.");
-
-        if (arrivalDate < DateTime.Today)
-            return BadRequest("Arrival date cannot be in the past.");
-
         try
         {
-            var properties = await _propertyRepository.GetAllAsync();
-            var results = new List<SearchResultContract>();
+            IEnumerable<(Domain.Entities.Property Property, Domain.Entities.RoomType RoomType)> results =
+                _searchService.SearchAvailableRooms(
+                    dto.City,
+                    dto.ArrivalDate,
+                    dto.DepartureDate,
+                    dto.Guests,
+                    dto.MaxPrice );
 
-            foreach (var property in properties.Where(p =>
-                         p.City.Equals(city, StringComparison.OrdinalIgnoreCase)))
+            List<AvailableRoomResultContract> response = results.Select( x => new AvailableRoomResultContract
             {
-                foreach (var roomType in property.RoomTypes)
-                {
-                    if (roomType.MinPersonCount > guests || roomType.MaxPersonCount < guests)
-                        continue;
+                Property = _mapper.Map<PropertyContract>( x.Property ),
+                RoomType = _mapper.Map<RoomTypeContract>( x.RoomType ),
+                TotalPrice = x.RoomType.DailyPrice * ( dto.DepartureDate - dto.ArrivalDate ).Days
+            } ).ToList();
 
-                    if (maxPrice.HasValue && roomType.DailyPrice > maxPrice)
-                        continue;
-
-                    var isAvailable = await _reservationService.IsRoomTypeAvailableAsync(
-                        roomType.Id, arrivalDate, departureDate);
-
-                    if (!isAvailable)
-                        continue;
-
-                    var nights = (departureDate - arrivalDate).Days;
-                    results.Add(new SearchResultContract
-                    {
-                        Property = _mapper.Map<PropertySearchResult>(property),
-                        RoomType = _mapper.Map<RoomTypeSearchResult>(roomType),
-                        TotalPrice = roomType.DailyPrice * nights,
-                        Currency = roomType.Currency,
-                        Nights = nights
-                    });
-                }
-            }
-
-            results = results.OrderBy(r => r.TotalPrice).ToList();
-
-            return Ok(results);
+            return Ok( response );
         }
-        catch (Exception ex)
+        catch ( Exception ex )
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Search failed" );
+            return BadRequest( ex.Message );
         }
     }
 }

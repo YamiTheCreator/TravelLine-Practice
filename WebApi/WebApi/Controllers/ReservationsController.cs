@@ -2,114 +2,95 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Contracts;
+using Web_Api.Contracts;
 
-namespace WebApi.Controllers;
+namespace Web_Api.Controllers;
 
 [ApiController]
-[Route("api/reservations")]
+[Route( "api/[controller]" )]
 public class ReservationsController : ControllerBase
 {
     private readonly IReservationService _reservationService;
     private readonly IMapper _mapper;
+    private readonly ILogger<ReservationsController> _logger;
 
     public ReservationsController(
         IReservationService reservationService,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<ReservationsController> logger )
     {
         _reservationService = reservationService;
         _mapper = mapper;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? propertyId,
-        [FromQuery] Guid? roomTypeId,
-        [FromQuery] DateTime? startDate,
-        [FromQuery] DateTime? endDate,
-        [FromQuery] string? guestName)
-    {
-        try
-        {
-            var reservations = await _reservationService.GetReservationsAsync(
-                propertyId, roomTypeId, startDate, endDate, guestName);
-
-            return Ok(_mapper.Map<List<ReservationResponse>>(reservations));
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        try
-        {
-            var reservation = await _reservationService.GetReservationByIdAsync(id);
-            if (reservation == null)
-                return NotFound($"Reservation with Id {id} not found.");
-
-            return Ok(_mapper.Map<ReservationResponse>(reservation));
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        _logger = logger;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] AddReservationRequestContract request)
+    public IActionResult CreateReservation( [FromBody] AddReservationContract dto )
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        // Дополнительная валидация дат
-        if (request.ArrivalDate >= request.DepartureDate)
-            return BadRequest("Departure date must be after arrival date.");
-
-        if (request.ArrivalDate < DateTime.Today)
-            return BadRequest("Arrival date cannot be in the past.");
-
         try
         {
-            var reservation = _mapper.Map<Reservation>(request);
-            var created = await _reservationService.CreateReservationAsync(reservation);
+            Reservation reservation = _reservationService.CreateReservation(
+                dto.PropertyId,
+                dto.RoomTypeId,
+                dto.ArrivalDate,
+                dto.DepartureDate,
+                dto.PersonCount,
+                dto.GuestName,
+                dto.GuestPhoneNumber );
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = created.Id },
-                _mapper.Map<ReservationResponse>(created));
+            ReservationContract? response = _mapper.Map<ReservationContract>( reservation );
+            return CreatedAtAction( nameof( GetReservation ), new
+            {
+                id = reservation.Id
+            }, response );
         }
-        catch (ArgumentException ex)
+        catch ( Exception ex )
         {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Reservation creation failed" );
+            return BadRequest( ex.Message );
         }
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Cancel(Guid id)
+    [HttpGet]
+    public IActionResult GetReservations(
+        [FromQuery] Guid? propertyId = null,
+        [FromQuery] Guid? roomTypeId = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] string? guestName = null )
+    {
+        IEnumerable<Reservation> reservations = _reservationService.GetReservations(
+            propertyId,
+            roomTypeId,
+            fromDate,
+            toDate,
+            guestName );
+
+        return Ok( _mapper.Map<List<ReservationContract>>( reservations ) );
+    }
+
+    [HttpGet( "{id:guid}" )]
+    public IActionResult GetReservation( Guid id )
+    {
+        Reservation? reservation = _reservationService.GetReservation( id );
+        if ( reservation == null )
+            return NotFound();
+
+        return Ok( _mapper.Map<ReservationContract>( reservation ) );
+    }
+
+    [HttpDelete( "{id:guid}" )]
+    public IActionResult CancelReservation( Guid id, [FromQuery] bool softDelete = true )
     {
         try
         {
-            var result = await _reservationService.CancelReservationAsync(id);
-            if (!result)
-                return NotFound($"Reservation with Id {id} not found or already cancelled.");
-
+            _reservationService.CancelReservation( id, softDelete );
             return NoContent();
         }
-        catch (Exception ex)
+        catch ( Exception ex )
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Reservation cancellation failed" );
+            return BadRequest( ex.Message );
         }
     }
 }

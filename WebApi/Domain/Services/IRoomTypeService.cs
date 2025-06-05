@@ -4,13 +4,11 @@ namespace Domain.Services;
 
 public interface IRoomTypeService
 {
-    Task<IEnumerable<RoomType>> GetRoomTypesByPropertyIdAsync(Guid propertyId);
-    Task<RoomType?> GetRoomTypeByIdAsync(Guid id);
+    RoomType? GetRoomTypeById( Guid id );
+    IEnumerable<RoomType> GetAllRoomTypes();
 
-    Task<RoomType> CreateRoomTypeForPropertyAsync(
-        Guid propertyId,
-        RoomType roomType);
-
-    Task<RoomType> UpdateRoomTypeAsync(RoomType roomType);
-    Task<bool> DeleteRoomTypeAsync(Guid id);
+    IEnumerable<RoomType> GetRoomTypeByPropertyId( Guid propertyId );
+    void AddRoomType( RoomType roomType );
+    void UpdateRoomType( RoomType roomType );
+    void DeleteRoomType( Guid id );
 }

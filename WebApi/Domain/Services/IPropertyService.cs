@@ -1,12 +1,13 @@
 using Domain.Entities;
+using System.Collections.Generic;
 
 namespace Domain.Services;
 
 public interface IPropertyService
 {
-    Task<IEnumerable<Property>> GetAllPropertiesAsync();
-    Task<Property?> GetPropertyByIdAsync(Guid id);
-    Task<Property> AddPropertyAsync(Property property);
-    Task<Property> UpdatePropertyAsync(Property property);
-    Task<bool> DeletePropertyAsync(Guid id);
+    IEnumerable<Property> GetAllProperties();
+    Property? GetPropertyById( Guid id );
+    void AddProperty( Property property );
+    void UpdateProperty( Property property );
+    void DeleteProperty( Guid id );
 }

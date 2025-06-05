@@ -2,80 +2,133 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Contracts;
+using Web_Api.Contracts;
 
-namespace WebApi.Controllers;
+namespace Web_Api.Controllers;
 
+[Route( "api/[controller]" )]
 [ApiController]
-public class RoomTypeController : ControllerBase
+public class RoomTypesController : ControllerBase
 {
     private readonly IRoomTypeService _roomTypeService;
+    private readonly IPropertyService _propertyService;
     private readonly IMapper _mapper;
+    private readonly ILogger<RoomTypesController> _logger;
 
-    public RoomTypeController(
+    public RoomTypesController(
         IRoomTypeService roomTypeService,
-        IMapper mapper)
+        IPropertyService propertyService,
+        IMapper mapper,
+        ILogger<RoomTypesController> logger )
     {
         _roomTypeService = roomTypeService;
+        _propertyService = propertyService;
         _mapper = mapper;
+        _logger = logger;
     }
 
-    [HttpGet("api/properties/{propertyId:guid}/roomtypes")]
-    public async Task<IActionResult> GetByPropertyId(Guid propertyId)
+    [HttpGet( "properties/{propertyId:guid}/roomtypes" )]
+    public ActionResult<IEnumerable<RoomTypeContract>> GetRoomTypesByPropertyId( Guid propertyId )
     {
-        var roomTypes = await _roomTypeService.GetRoomTypesByPropertyIdAsync(propertyId);
-        return Ok(_mapper.Map<List<RoomTypeResponseContract>>(roomTypes));
+        Property? property = _propertyService.GetPropertyById( propertyId );
+        if ( property == null )
+        {
+            _logger.LogWarning( "Property with id {PropertyId} not found", propertyId );
+            return NotFound( $"Property with id {propertyId} not found" );
+        }
+
+        IEnumerable<RoomType> roomTypes = _roomTypeService.GetRoomTypeByPropertyId( propertyId );
+        List<RoomTypeContract>? roomTypeContracts = _mapper.Map<List<RoomTypeContract>>( roomTypes );
+        return Ok( roomTypeContracts );
     }
 
-    [HttpGet("api/roomtypes/{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [HttpGet( "{id:guid}" )]
+    public ActionResult<RoomTypeContract> GetRoomType( Guid id )
     {
-        var roomType = await _roomTypeService.GetRoomTypeByIdAsync(id);
-        if (roomType == null)
-            return NotFound();
+        RoomType? roomType = _roomTypeService.GetRoomTypeById( id );
+        if ( roomType == null )
+        {
+            _logger.LogWarning( "RoomType with id {RoomTypeId} not found", id );
+            return NotFound( $"RoomType with id {id} not found" );
+        }
 
-        return Ok(_mapper.Map<RoomTypeResponseContract>(roomType));
+        RoomTypeContract? roomTypeDto = _mapper.Map<RoomTypeContract>( roomType );
+        return Ok( roomTypeDto );
     }
 
-    [HttpPost("api/properties/{propertyId:guid}/roomtypes")]
-    public async Task<IActionResult> Create(Guid propertyId, [FromBody] AddRoomTypeContract contract)
+    [HttpPost( "properties/{propertyId:guid}/roomtypes" )]
+    public ActionResult<RoomTypeContract> AddRoomType( Guid propertyId, AddRoomTypeContract addRoomTypeContract )
     {
-        if (propertyId != contract.PropertyId)
-            return BadRequest("PropertyId in URL and body do not match.");
+        Property? property = _propertyService.GetPropertyById( propertyId );
+        if ( property == null )
+        {
+            _logger.LogWarning( "Property with id {PropertyId} not found when adding room type", propertyId );
+            return NotFound( $"Property with id {propertyId} not found" );
+        }
 
-        var roomType = _mapper.Map<RoomType>(contract);
-        var created = await _roomTypeService.CreateRoomTypeForPropertyAsync(propertyId, roomType);
-        var response = _mapper.Map<RoomTypeResponseContract>(created);
-
-        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
-    }
-
-    [HttpPut("api/roomtypes/{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRoomTypeContract contract)
-    {
-        if (id != contract.Id)
-            return BadRequest("Id mismatch");
-
-        var roomType = _mapper.Map<RoomType>(contract);
+        RoomType? roomType = _mapper.Map<RoomType>( addRoomTypeContract );
+        roomType.PropertyId = propertyId;
 
         try
         {
-            var updated = await _roomTypeService.UpdateRoomTypeAsync(roomType);
-            return Ok(_mapper.Map<RoomTypeResponseContract>(updated));
+            _roomTypeService.AddRoomType( roomType );
+
+            RoomTypeContract? roomTypeContract = _mapper.Map<RoomTypeContract>( roomType );
+            return CreatedAtAction( nameof( GetRoomType ), new
+            {
+                id = roomType.Id
+            }, roomTypeContract );
         }
-        catch (KeyNotFoundException)
+        catch ( Exception ex )
         {
-            return NotFound();
+            _logger.LogError( ex, "Error adding room type for property {PropertyId}", propertyId );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 
-    [HttpDelete("api/roomtypes/{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    [HttpPut( "{id:guid}" )]
+    public IActionResult UpdateRoomType( Guid id, UpdateRoomTypeContract updateRoomTypeContract )
     {
-        var deleted = await _roomTypeService.DeleteRoomTypeAsync(id);
-        if (!deleted)
-            return NotFound();
+        RoomType? existingRoomType = _roomTypeService.GetRoomTypeById( id );
+        if ( existingRoomType == null )
+        {
+            _logger.LogWarning( "RoomType with id {RoomTypeId} not found for update", id );
+            return NotFound( $"RoomType with id {id} not found" );
+        }
 
-        return NoContent();
+        try
+        {
+            _mapper.Map( updateRoomTypeContract, existingRoomType );
+            _roomTypeService.UpdateRoomType( existingRoomType );
+
+            return NoContent();
+        }
+        catch ( Exception ex )
+        {
+            _logger.LogError( ex, "Error updating room type with id {RoomTypeId}", id );
+            return StatusCode( 500, "Internal server error" );
+        }
+    }
+
+    [HttpDelete( "{id:guid}" )]
+    public IActionResult DeleteRoomType( Guid id )
+    {
+        RoomType? roomType = _roomTypeService.GetRoomTypeById( id );
+        if ( roomType == null )
+        {
+            _logger.LogWarning( "RoomType with id {RoomTypeId} not found for deletion", id );
+            return NotFound( $"RoomType with id {id} not found" );
+        }
+
+        try
+        {
+            _roomTypeService.DeleteRoomType( id );
+            return NoContent();
+        }
+        catch ( Exception ex )
+        {
+            _logger.LogError( ex, "Error deleting room type with id {RoomTypeId}", id );
+            return StatusCode( 500, "Internal server error" );
+        }
     }
 }

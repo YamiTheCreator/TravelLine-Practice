@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Domain.Entities;
 using Domain.Repositories;
 using Domain.Services;
@@ -6,114 +7,133 @@ namespace Infrastructure.Services;
 
 public class ReservationService : IReservationService
 {
-    private readonly IReservationRepository _repository;
+    private readonly IReservationRepository _reservationRepository;
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly IPropertyRepository _propertyRepository;
 
     public ReservationService(
-        IReservationRepository repository,
+        IReservationRepository reservationRepository,
         IRoomTypeRepository roomTypeRepository,
-        IPropertyRepository propertyRepository)
+        IPropertyRepository propertyRepository )
     {
-        _repository = repository;
+        _reservationRepository = reservationRepository;
         _roomTypeRepository = roomTypeRepository;
         _propertyRepository = propertyRepository;
     }
 
-    public async Task<Reservation?> GetReservationByIdAsync(Guid id)
-    {
-        return await _repository.GetByIdAsync(id);
-    }
-
-    public async Task<IEnumerable<Reservation>> GetReservationsAsync(
-        Guid? propertyId = null,
-        Guid? roomTypeId = null,
-        DateTime? startDate = null,
-        DateTime? endDate = null,
-        string? guestName = null)
-    {
-        return await _repository.GetFilteredAsync(
-            propertyId, roomTypeId, startDate, endDate, guestName);
-    }
-
-    public async Task<Reservation> CreateReservationAsync(Reservation reservation)
-    {
-        if (reservation == null)
-            throw new ArgumentNullException(nameof(reservation));
-
-        if (reservation.ArrivalDate >= reservation.DepartureDate)
-            throw new ArgumentException("Departure date must be after arrival date.");
-
-        if (reservation.ArrivalDate < DateTime.Today)
-            throw new ArgumentException("Arrival date cannot be in the past.");
-
-        var roomType = await _roomTypeRepository.GetByIdAsync(reservation.RoomTypeId);
-        if (roomType == null)
-            throw new ArgumentException($"RoomType with Id {reservation.RoomTypeId} not found.");
-
-        var property = await _propertyRepository.GetByIdAsync(reservation.PropertyId);
-        if (property == null)
-            throw new ArgumentException($"Property with Id {reservation.PropertyId} not found.");
-
-        if (roomType.PropertyId != reservation.PropertyId)
-            throw new ArgumentException("RoomType does not belong to the specified Property.");
-
-        var isAvailable = await IsRoomTypeAvailableAsync(
-            reservation.RoomTypeId,
-            reservation.ArrivalDate,
-            reservation.DepartureDate);
-
-        if (!isAvailable)
-            throw new InvalidOperationException("RoomType is not available for the specified dates.");
-
-        var nights = (reservation.DepartureDate - reservation.ArrivalDate).Days;
-        reservation.Total = roomType.DailyPrice * nights;
-        reservation.Currency = roomType.Currency;
-        reservation.Id = Guid.NewGuid();
-        reservation.IsCancelled = false;
-
-        return await _repository.AddAsync(reservation);
-    }
-
-    public async Task<bool> CancelReservationAsync(Guid id)
-    {
-        var reservation = await _repository.GetByIdAsync(id);
-        if (reservation == null || reservation.IsCancelled)
-            return false;
-
-        return await _repository.CancelAsync(id);
-    }
-
-    public async Task<bool> IsRoomTypeAvailableAsync(
+    public Reservation CreateReservation(
+        Guid propertyId,
         Guid roomTypeId,
         DateTime arrivalDate,
-        DateTime departureDate)
+        DateTime departureDate,
+        int personCount,
+        string guestName,
+        string guestPhoneNumber )
     {
-        var existingReservations = await _repository.GetFilteredAsync(
-            propertyId: null,
-            roomTypeId: roomTypeId,
-            startDate: arrivalDate,
-            endDate: departureDate,
-            guestName: null);
-        
-        return existingReservations.All(r => r.IsCancelled);
+        ValidateReservationParameters( arrivalDate, departureDate, personCount, guestName, guestPhoneNumber );
+
+        RoomType roomType = _roomTypeRepository.GetById( roomTypeId )
+                            ?? throw new KeyNotFoundException( "Room type not found" );
+
+        if ( personCount < roomType.MinPersonCount || personCount > roomType.MaxPersonCount )
+            throw new ValidationException(
+                $"Person count must be between {roomType.MinPersonCount} and {roomType.MaxPersonCount}" );
+
+        IEnumerable<Reservation> activeReservations = _reservationRepository
+            .GetAllReservations( roomTypeId, arrivalDate, departureDate );
+
+        if ( activeReservations.Any() )
+            throw new ValidationException( "Room is not available for selected dates" );
+
+        int nights = ( departureDate - arrivalDate ).Days;
+        decimal total = roomType.DailyPrice * nights;
+
+        Reservation reservation = new Reservation
+        {
+            Id = Guid.NewGuid(),
+            PropertyId = propertyId,
+            RoomTypeId = roomTypeId,
+            ArrivalDate = arrivalDate,
+            DepartureDate = departureDate,
+            GuestName = guestName,
+            GuestPhoneNumber = guestPhoneNumber,
+            Total = total,
+            Currency = roomType.Currency,
+            IsCancelled = false
+        };
+
+        _reservationRepository.Add( reservation );
+        return reservation;
     }
 
-    public async Task<IEnumerable<Reservation>> GetActiveReservationsForRoomTypeAsync(
-        Guid roomTypeId,
-        DateTime startDate,
-        DateTime endDate)
+    public void CancelReservation( Guid reservationId, bool softDelete = true )
     {
-        var allReservations = await _repository.GetFilteredAsync(
-            propertyId: null,
-            roomTypeId: roomTypeId,
-            startDate: null,
-            endDate: null,
-            guestName: null);
+        Reservation reservation = _reservationRepository.GetById( reservationId )
+                                  ?? throw new KeyNotFoundException( "Reservation not found" );
 
-        return allReservations
-            .Where(r => !r.IsCancelled)
-            .Where(r => startDate < r.DepartureDate && endDate > r.ArrivalDate)
-            .OrderBy(r => r.ArrivalDate);
+        if ( softDelete )
+        {
+            reservation.IsCancelled = true;
+            _reservationRepository.Update( reservation );
+        }
+        else
+        {
+            _reservationRepository.Delete( reservation );
+        }
+    }
+
+    public Reservation? GetReservation( Guid id )
+    {
+        return _reservationRepository.GetById( id );
+    }
+
+    public IEnumerable<Reservation> GetReservations(
+        Guid? propertyId = null,
+        Guid? roomTypeId = null,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        string? guestName = null )
+    {
+        IEnumerable<Reservation> query = _reservationRepository.GetAll();
+
+        if ( propertyId.HasValue )
+            query = query.Where( r => r.PropertyId == propertyId.Value );
+
+        if ( roomTypeId.HasValue )
+            query = query.Where( r => r.RoomTypeId == roomTypeId.Value );
+
+        if ( fromDate.HasValue )
+            query = query.Where( r => r.DepartureDate >= fromDate.Value );
+
+        if ( toDate.HasValue )
+            query = query.Where( r => r.ArrivalDate <= toDate.Value );
+
+        if ( !string.IsNullOrEmpty( guestName ) )
+            query = query.Where( r => r.GuestName.Contains( guestName ) );
+
+        return query.ToList();
+    }
+
+    private static void ValidateReservationParameters(
+        DateTime arrivalDate,
+        DateTime departureDate,
+        int personCount,
+        string guestName,
+        string guestPhoneNumber )
+    {
+        if ( departureDate <= arrivalDate )
+            throw new ValidationException( "Departure date must be after arrival date" );
+
+        if ( arrivalDate < DateTime.Today )
+            throw new ValidationException( "Arrival date cannot be in the past" );
+
+        if ( personCount <= 0 )
+            throw new ValidationException( "Person count must be positive" );
+
+        if ( string.IsNullOrWhiteSpace( guestName ) )
+            throw new ValidationException( "Guest name is required" );
+
+        if ( string.IsNullOrWhiteSpace( guestPhoneNumber ) )
+            throw new ValidationException( "Guest phone number is required" );
     }
 }

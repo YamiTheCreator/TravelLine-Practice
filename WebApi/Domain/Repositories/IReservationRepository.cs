@@ -4,16 +4,12 @@ namespace Domain.Repositories;
 
 public interface IReservationRepository
 {
-    Task<Reservation?> GetByIdAsync(Guid id);
-
-    Task<IEnumerable<Reservation>> GetFilteredAsync(
-        Guid? propertyId,
-        Guid? roomTypeId,
-        DateTime? startDate,
-        DateTime? endDate,
-        string? guestName);
-
-    Task<Reservation> AddAsync(Reservation reservation);
-    Task<bool> UpdateAsync(Reservation reservation);
-    Task<bool> CancelAsync(Guid id);
+    void Add( Reservation reservation );
+    void Update( Reservation reservation );
+    void Delete( Reservation reservation );
+    Reservation? GetById( Guid id );
+    IEnumerable<Reservation> GetByPropertyId( Guid propertyId );
+    IEnumerable<Reservation> GetByRoomTypeId( Guid roomTypeId );
+    IEnumerable<Reservation> GetAllReservations( Guid roomTypeId, DateTime from, DateTime to );
+    IEnumerable<Reservation> GetAll();
 }

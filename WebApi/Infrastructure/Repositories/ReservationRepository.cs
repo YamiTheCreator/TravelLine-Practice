@@ -9,67 +9,63 @@ public class ReservationRepository : IReservationRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public ReservationRepository(ApplicationDbContext context)
+    public ReservationRepository( ApplicationDbContext context )
     {
         _context = context;
     }
 
-    public async Task<Reservation?> GetByIdAsync(Guid id)
+    public void Add( Reservation reservation )
     {
-        return await _context.Reservations
-            .FirstOrDefaultAsync(r => r.Id == id);
+        _context.Reservations.Add( reservation );
+        _context.SaveChanges();
     }
 
-    public async Task<IEnumerable<Reservation>> GetFilteredAsync(
-        Guid? propertyId,
-        Guid? roomTypeId,
-        DateTime? startDate,
-        DateTime? endDate,
-        string? guestName)
+    public void Update( Reservation reservation )
     {
-        var query = _context.Reservations.AsQueryable();
-
-        if (propertyId.HasValue)
-            query = query.Where(r => r.PropertyId == propertyId);
-
-        if (roomTypeId.HasValue)
-            query = query.Where(r => r.RoomTypeId == roomTypeId);
-        
-        if (startDate.HasValue && endDate.HasValue)
-            query = query.Where(r => 
-                r.ArrivalDate < endDate && 
-                r.DepartureDate > startDate);
-
-        if (!string.IsNullOrEmpty(guestName))
-            query = query.Where(r => r.GuestName.Contains(guestName));
-
-        return await query.ToListAsync();
+        _context.Reservations.Update( reservation );
+        _context.SaveChanges();
     }
 
-    public async Task<Reservation> AddAsync(Reservation reservation)
+    public void Delete( Reservation reservation )
     {
-        await _context.Reservations.AddAsync(reservation);
-        await _context.SaveChangesAsync();
-        return reservation;
+        _context.Reservations.Remove( reservation );
+        _context.SaveChanges();
     }
 
-    public async Task<bool> UpdateAsync(Reservation reservation)
+    public Reservation? GetById( Guid id )
     {
-        var existing = await _context.Reservations.FindAsync(reservation.Id);
-        if (existing == null)
-            return false;
-
-        _context.Entry(existing).CurrentValues.SetValues(reservation);
-        return await _context.SaveChangesAsync() > 0;
+        return _context.Reservations
+            .Include( r => r.PropertyId )
+            .Include( r => r.RoomTypeId )
+            .FirstOrDefault( r => r.Id == id );
     }
 
-    public async Task<bool> CancelAsync(Guid id)
+    public IEnumerable<Reservation> GetByPropertyId( Guid propertyId )
     {
-        var reservation = await GetByIdAsync(id);
-        if (reservation == null || reservation.IsCancelled)
-            return false;
+        return _context.Reservations
+            .Where( r => r.PropertyId == propertyId )
+            .ToList();
+    }
 
-        reservation.IsCancelled = true;
-        return await UpdateAsync(reservation);
+    public IEnumerable<Reservation> GetByRoomTypeId( Guid roomTypeId )
+    {
+        return _context.Reservations
+            .Where( r => r.RoomTypeId == roomTypeId )
+            .ToList();
+    }
+
+    public IEnumerable<Reservation> GetAllReservations( Guid roomTypeId, DateTime from, DateTime to )
+    {
+        return _context.Reservations
+            .Where( r => r.RoomTypeId == roomTypeId &&
+                         !r.IsCancelled &&
+                         r.DepartureDate > from &&
+                         r.ArrivalDate < to )
+            .ToList();
+    }
+
+    public IEnumerable<Reservation> GetAll()
+    {
+        return _context.Reservations.ToList();
     }
 }

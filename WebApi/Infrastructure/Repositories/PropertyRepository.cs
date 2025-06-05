@@ -1,57 +1,49 @@
-using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Domain.Repositories;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Repositories;
-
-public class PropertyRepository : IPropertyRepository
+namespace Infrastructure.Repositories
 {
-    private readonly ApplicationDbContext _context;
-
-    public PropertyRepository(ApplicationDbContext context)
+    public class PropertyRepository : IPropertyRepository
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
 
-    public async Task<IEnumerable<Property>> GetAllAsync()
-    {
-        return await _context.Properties
-            .Include(p => p.RoomTypes)
-            .ToListAsync();
-    }
+        public PropertyRepository( ApplicationDbContext context )
+        {
+            _context = context;
+        }
 
-    public async Task<Property?> GetByIdAsync(Guid id)
-    {
-        return await _context.Properties
-            .Include(p => p.RoomTypes)
-            .FirstOrDefaultAsync(p => Equals(p.Id, id));
-    }
+        public void Add( Property property )
+        {
+            _context.Properties.Add( property );
+            _context.SaveChanges();
+        }
 
-    public async Task<Property> AddAsync(Property property)
-    {
-        await _context.Properties.AddAsync(property);
-        await _context.SaveChangesAsync();
-        return property;
-    }
+        public void Update( Property property )
+        {
+            _context.Properties.Update( property );
+            _context.SaveChanges();
+        }
 
-    public async Task<Property?> UpdateAsync(Property property)
-    {
-        var existingProperty = await _context.Properties.FindAsync(property.Id);
-        if (existingProperty == null) return null;
+        public void Delete( Property property )
+        {
+            _context.Properties.Remove( property );
+            _context.SaveChanges();
+        }
 
-        _context.Entry(existingProperty).CurrentValues.SetValues(property);
-        await _context.SaveChangesAsync();
-        return existingProperty;
-    }
+        public Property? GetById( Guid id )
+        {
+            return _context.Properties
+                .Include( p => p.RoomTypes )
+                .FirstOrDefault( p => p.Id == id );
+        }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        var property = await _context.Properties.FindAsync(id);
-        if (property == null) return false;
-
-        _context.Properties.Remove(property);
-        await _context.SaveChangesAsync();
-        return true;
+        public IEnumerable<Property> GetAll()
+        {
+            return _context.Properties
+                .Include( p => p.RoomTypes )
+                .ToList();
+        }
     }
 }

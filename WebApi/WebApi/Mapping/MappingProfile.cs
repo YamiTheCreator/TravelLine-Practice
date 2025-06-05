@@ -1,24 +1,22 @@
 using AutoMapper;
 using Domain.Entities;
-using WebApi.Contracts;
+using Web_Api.Contracts;
 
-namespace WebApi.Mapping;
+namespace Web_Api.Mapping;
 
 public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Property, PropertyResponseContract>();
+        CreateMap<Property, PropertyContract>();
         CreateMap<AddPropertyContract, Property>();
         CreateMap<UpdatePropertyContract, Property>();
-        CreateMap<Property, PropertySearchResult>();
 
-        CreateMap<RoomType, RoomTypeResponseContract>();
+        CreateMap<RoomType, RoomTypeContract>();
         CreateMap<AddRoomTypeContract, RoomType>();
         CreateMap<UpdateRoomTypeContract, RoomType>();
-        CreateMap<RoomType, RoomTypeSearchResult>();
 
-        CreateMap<Reservation, ReservationResponse>();
-        CreateMap<AddReservationRequestContract, Reservation>();
+        CreateMap<Reservation, ReservationContract>();
+        CreateMap<AddReservationContract, Reservation>();
     }
 }

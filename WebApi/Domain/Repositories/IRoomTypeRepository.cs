@@ -4,9 +4,10 @@ namespace Domain.Repositories;
 
 public interface IRoomTypeRepository
 {
-    Task<IEnumerable<RoomType>> GetByPropertyIdAsync(Guid propertyId);
-    Task<RoomType?> GetByIdAsync(Guid id);
-    Task<RoomType> AddAsync(RoomType roomType);
-    Task<RoomType?> UpdateAsync(RoomType roomType);
-    Task<bool> DeleteAsync(Guid id);
+    void Add( RoomType roomType );
+    void Update( RoomType roomType );
+    void Delete( RoomType roomType );
+    RoomType? GetById( Guid id );
+    IEnumerable<RoomType> GetByPropertyId( Guid propertyId );
+    IEnumerable<RoomType> GetAll();
 }

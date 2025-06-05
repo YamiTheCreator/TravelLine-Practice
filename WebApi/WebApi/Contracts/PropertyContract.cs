@@ -1,6 +1,6 @@
-namespace Domain.Entities;
+namespace Web_Api.Contracts;
 
-public class Property
+public class PropertyContract
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
@@ -9,6 +9,4 @@ public class Property
     public string Address { get; set; }
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
-
-    public ICollection<RoomType> RoomTypes { get; set; } = new List<RoomType>();
 }

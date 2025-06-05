@@ -2,127 +2,148 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Contracts;
+using Web_Api.Contracts;
 
-namespace WebApi.Controllers;
+namespace Web_Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route( "api/[controller]" )]
 public class PropertiesController : ControllerBase
 {
     private readonly IPropertyService _propertyService;
     private readonly IMapper _mapper;
+    private readonly ILogger<PropertiesController> _logger;
 
     public PropertiesController(
         IPropertyService propertyService,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<PropertiesController> logger )
     {
         _propertyService = propertyService;
         _mapper = mapper;
+        _logger = logger;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public ActionResult<IEnumerable<PropertyContract>> GetAllProperties()
     {
         try
         {
-            var properties = await _propertyService.GetAllPropertiesAsync();
-            return Ok(_mapper.Map<List<PropertyResponseContract>>(properties));
+            IEnumerable<Property> properties = _propertyService.GetAllProperties();
+            IEnumerable<PropertyContract>? propertyContracts = _mapper.Map<IEnumerable<PropertyContract>>( properties );
+            return Ok( propertyContracts );
         }
-        catch (Exception ex)
+        catch ( Exception ex )
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Error occurred while getting all properties" );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [HttpGet( "{id:guid}" )]
+    public ActionResult<PropertyContract> GetPropertyById( Guid id )
     {
         try
         {
-            var property = await _propertyService.GetPropertyByIdAsync(id);
-            if (property == null)
-                return NotFound($"Property with Id {id} not found.");
+            Property? property = _propertyService.GetPropertyById( id );
 
-            return Ok(_mapper.Map<PropertyResponseContract>(property));
+            if ( property == null )
+            {
+                _logger.LogWarning( "Property with id {Id} not found", id );
+                return NotFound();
+            }
+
+            PropertyContract? propertyContract = _mapper.Map<PropertyContract>( property );
+            return Ok( propertyContract );
         }
-        catch (Exception ex)
+        catch ( Exception ex )
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Error occurred while getting property with id: {Id}", id );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] AddPropertyContract contract)
+    public IActionResult AddProperty( [FromBody] AddPropertyContract addPropertyContract )
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         try
         {
-            var property = _mapper.Map<Property>(contract);
-            var created = await _propertyService.AddPropertyAsync(property);
+            if ( !ModelState.IsValid )
+            {
+                _logger.LogWarning( "Invalid model state for AddProperty" );
+                return BadRequest( ModelState );
+            }
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = created.Id },
-                _mapper.Map<PropertyResponseContract>(created));
+            Property? property = _mapper.Map<Property>( addPropertyContract );
+            _propertyService.AddProperty( property );
+
+            PropertyContract? propertyContract = _mapper.Map<PropertyContract>( property );
+            _logger.LogInformation( "Property added successfully with id: {Id}", property.Id );
+
+            return CreatedAtAction( nameof( GetPropertyById ), new
+            {
+                id = propertyContract.Id
+            }, propertyContract );
         }
-        catch (ArgumentException ex)
+        catch ( Exception ex )
         {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Error occurred while adding property" );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(
-        Guid id,
-        [FromBody] UpdatePropertyContract contract)
+    [HttpPut( "{id:guid}" )]
+    public IActionResult UpdateProperty( Guid id, [FromBody] UpdatePropertyContract updatePropertyContract )
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        if (id != contract.Id)
-            return BadRequest("Id mismatch between URL and body.");
-
         try
         {
-            var property = _mapper.Map<Property>(contract);
-            await _propertyService.UpdatePropertyAsync(property);
+            if ( !ModelState.IsValid )
+            {
+                _logger.LogWarning( "Invalid model state for UpdateProperty with id: {Id}", id );
+                return BadRequest( ModelState );
+            }
+
+            Property? existingProperty = _propertyService.GetPropertyById( id );
+            if ( existingProperty == null )
+            {
+                _logger.LogWarning( "Property with id {Id} not found for update", id );
+                return NotFound();
+            }
+
+            _mapper.Map( updatePropertyContract, existingProperty );
+            _propertyService.UpdateProperty( existingProperty );
+
+            _logger.LogInformation( "Property with id {Id} updated successfully", id );
             return NoContent();
         }
-        catch (KeyNotFoundException ex)
+        catch ( Exception ex )
         {
-            return NotFound(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Error occurred while updating property with id: {Id}", id );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    [HttpDelete( "{id:guid}" )]
+    public IActionResult DeleteProperty( Guid id )
     {
         try
         {
-            var deleted = await _propertyService.DeletePropertyAsync(id);
-            if (!deleted)
-                return NotFound($"Property with Id {id} not found.");
+            Property? property = _propertyService.GetPropertyById( id );
+            if ( property == null )
+            {
+                _logger.LogWarning( "Property with id {Id} not found for deletion", id );
+                return NotFound();
+            }
+
+            _propertyService.DeleteProperty( id );
+            _logger.LogInformation( "Property with id {Id} deleted successfully", id );
 
             return NoContent();
         }
-        catch (Exception ex)
+        catch ( Exception ex )
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            _logger.LogError( ex, "Error occurred while deleting property with id: {Id}", id );
+            return StatusCode( 500, "Internal server error" );
         }
     }
 }

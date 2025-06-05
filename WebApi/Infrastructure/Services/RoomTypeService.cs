@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Domain.Entities;
 using Domain.Repositories;
 using Domain.Services;
@@ -9,59 +10,91 @@ public class RoomTypeService : IRoomTypeService
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly IPropertyRepository _propertyRepository;
 
+    private const int MaxNameLength = 100;
+    private const int CurrencyLength = 3;
+    private const int MaxTextItemLength = 50;
+
     public RoomTypeService(
         IRoomTypeRepository roomTypeRepository,
-        IPropertyRepository propertyRepository)
+        IPropertyRepository propertyRepository )
     {
         _roomTypeRepository = roomTypeRepository;
         _propertyRepository = propertyRepository;
     }
 
-    public async Task<RoomType> CreateRoomTypeForPropertyAsync(
-        Guid propertyId,
-        RoomType roomType)
+    public RoomType? GetRoomTypeById( Guid id )
     {
-        ArgumentNullException.ThrowIfNull(roomType);
+        if ( id == Guid.Empty )
+            throw new ArgumentException( "Invalid ID" );
 
-        var property = await _propertyRepository.GetByIdAsync(propertyId);
-        if (property == null)
-            throw new ArgumentException($"Property with Id {propertyId} not found.");
+        return _roomTypeRepository.GetById( id );
+    }
 
-        if (roomType.MinPersonCount > roomType.MaxPersonCount)
-            throw new ArgumentException("MinPersonCount cannot be greater than MaxPersonCount.");
+    public IEnumerable<RoomType> GetAllRoomTypes() => _roomTypeRepository.GetAll();
+
+    public IEnumerable<RoomType> GetRoomTypeByPropertyId( Guid propertyId )
+    {
+        if ( propertyId == Guid.Empty )
+            throw new ArgumentException( "Invalid property ID" );
+
+        return _roomTypeRepository.GetByPropertyId( propertyId );
+    }
+
+    public void AddRoomType( RoomType roomType )
+    {
+        ArgumentNullException.ThrowIfNull( roomType );
+
+        ValidateRoomTypeBasic( roomType );
+
+        if ( _propertyRepository.GetById( roomType.PropertyId ) == null )
+            throw new ValidationException( "Property not found" );
 
         roomType.Id = Guid.NewGuid();
-        roomType.PropertyId = propertyId;
-
-        return await _roomTypeRepository.AddAsync(roomType);
+        _roomTypeRepository.Add( roomType );
     }
 
-    public async Task<IEnumerable<RoomType>> GetRoomTypesByPropertyIdAsync(Guid propertyId)
+    public void UpdateRoomType( RoomType roomType )
     {
-        return await _roomTypeRepository.GetByPropertyIdAsync(propertyId);
+        if ( roomType.Id == Guid.Empty )
+            throw new ArgumentException( "Invalid room type" );
+
+        ValidateRoomTypeBasic( roomType );
+
+        _roomTypeRepository.Update( roomType );
     }
 
-    public async Task<RoomType?> GetRoomTypeByIdAsync(Guid id)
+    public void DeleteRoomType( Guid id )
     {
-        return await _roomTypeRepository.GetByIdAsync(id);
+        if ( id == Guid.Empty )
+            throw new ArgumentException( "Invalid ID" );
+
+        RoomType roomType = _roomTypeRepository.GetById( id )
+                            ?? throw new KeyNotFoundException( "Room type not found" );
+
+        _roomTypeRepository.Delete( roomType );
     }
 
-    public async Task<RoomType> UpdateRoomTypeAsync(RoomType roomType)
+    private static void ValidateRoomTypeBasic( RoomType roomType )
     {
-        ArgumentNullException.ThrowIfNull(roomType);
+        if ( string.IsNullOrWhiteSpace( roomType.Name ) || roomType.Name.Length > MaxNameLength )
+            throw new ValidationException( $"Name must be 1-{MaxNameLength} chars" );
 
-        if (roomType.MinPersonCount > roomType.MaxPersonCount)
-            throw new ArgumentException("MinPersonCount cannot be greater than MaxPersonCount.");
+        if ( roomType.DailyPrice <= 0 )
+            throw new ValidationException( "Price must be positive" );
 
-        var updated = await _roomTypeRepository.UpdateAsync(roomType);
-        if (updated == null)
-            throw new KeyNotFoundException($"RoomType with Id {roomType.Id} not found.");
+        if ( string.IsNullOrWhiteSpace( roomType.Currency ) || roomType.Currency.Length != CurrencyLength )
+            throw new ValidationException( $"Currency must be {CurrencyLength} chars" );
 
-        return updated;
-    }
+        if ( roomType.MinPersonCount <= 0 || roomType.MaxPersonCount <= 0 )
+            throw new ValidationException( "Person count must be positive" );
 
-    public async Task<bool> DeleteRoomTypeAsync(Guid id)
-    {
-        return await _roomTypeRepository.DeleteAsync(id);
+        if ( roomType.MinPersonCount > roomType.MaxPersonCount )
+            throw new ValidationException( "Min persons cannot exceed max" );
+
+        if ( roomType.Services.Any( s => string.IsNullOrWhiteSpace( s ) || s.Length > MaxTextItemLength ) )
+            throw new ValidationException( $"Services must be 1-{MaxTextItemLength} chars" );
+
+        if ( roomType.Amenities.Any( a => string.IsNullOrWhiteSpace( a ) || a.Length > MaxTextItemLength ) )
+            throw new ValidationException( $"Amenities must be 1-{MaxTextItemLength} chars" );
     }
 }
